@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>麻雀カウンター</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            height: -webkit-fill-available;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Arial', sans-serif;
+            background: -webkit-linear-gradient(315deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            height: 100dvh;
+            padding: env(safe-area-inset-top, 10px) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+            overflow: hidden;
+        }
+
+        /* ヘッダー */
+        .header {
+            text-align: center;
+            padding: 6px 10px 4px;
+            -webkit-box-flex: 0;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
+        /* プレイヤーグリッド: 2x2 */
+        .players-grid {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 6px;
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .player-card {
+            background: white;
+            border-radius: 10px;
+            padding: 8px 10px;
+            -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            width: calc(50% - 3px);
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* カードヘッダー */
+        .player-header {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            margin-bottom: 6px;
+            padding-bottom: 5px;
+            border-bottom: 1.5px solid #e8e8e8;
+            gap: 6px;
+        }
+
+        .player-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #222;
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-name-input {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .player-position {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        /* トグルボタン行 */
+        .toggle-grid {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            gap: 4px;
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+        }
+
+        .toggle-item {
+            width: calc(50% - 2px);
+        }
+
+        .toggle-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .btn-toggle {
+            width: 100%;
+            padding: 7px 4px;
+            border: 1.5px solid #ddd;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #f8f8f8;
+            color: #aaa;
+            -webkit-appearance: none;
+            appearance: none;
+            -webkit-transition: all 0.15s;
+            transition: all 0.15s;
+        }
+
+        .btn-toggle.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .btn-toggle.disabled {
+            background: #f0f0f0;
+            color: #ccc;
+            border-color: #e8e8e8;
+        }
+
+        /* 統計 */
+        .stats-mini {
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid #f0f0f0;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .stats-mini strong {
+            color: #444;
+            font-size: 11px;
+        }
+
+        /* 下部ボタン */
+        .control-panel {
+            padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            gap: 6px;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-save {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            background: #2196F3;
+            color: white;
+            padding: 12px 0;
+            font-size: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .btn-history {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            background: #9C27B0;
+            color: white;
+            padding: 12px 0;
+            font-size: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* ===== モーダル共通 ===== */
+        .modal, .agari-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 8% auto;
+            padding: 20px 16px;
+            border-radius: 14px;
+            width: 92%;
+            max-width: 640px;
+            max-height: 82vh;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-header {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 12px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #bbb;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+
+        /* 和了モーダル */
+        .agari-modal-content {
+            background: white;
+            margin: 12% auto;
+            padding: 20px 16px;
+            border-radius: 14px;
+            width: 92%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .form-group { margin-bottom: 14px; }
+
+        .form-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-input:focus { outline: none; border-color: #4CAF50; }
+
+        .radio-group {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            gap: 10px;
+        }
+
+        .radio-label {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+        }
+
+        .radio-label input[type="radio"] { margin-right: 6px; width: 16px; height: 16px; }
+        .radio-label.selected { border-color: #4CAF50; background: #e8f5e9; }
+
+        .select-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        .btn-submit {
+            background: #4CAF50; color: white;
+            padding: 13px; font-size: 16px;
+            border: none; border-radius: 8px;
+            cursor: pointer; width: 100%;
+            font-weight: bold; margin-top: 8px;
+            -webkit-appearance: none; appearance: none;
+        }
+
+        .btn-cancel {
+            background: #999; color: white;
+            padding: 13px; font-size: 16px;
+            border: none; border-radius: 8px;
+            cursor: pointer; width: 100%;
+            font-weight: bold; margin-top: 8px;
+            -webkit-appearance: none; appearance: none;
+        }
+
+        /* 履歴 */
+        .history-item {
+            background: #f7f7f7;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .history-header { font-weight: bold; color: #333; margin-bottom: 8px; font-size: 14px; }
+
+        .history-players {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .history-player {
+            background: white; padding: 8px;
+            border-radius: 6px; font-size: 12px;
+            width: calc(50% - 4px);
+        }
+
+        .history-player-name { font-weight: bold; color: #4CAF50; margin-bottom: 4px; }
+        .history-stats { color: #666; line-height: 1.5; }
+
+        .history-summary {
+            margin-top: 8px; padding-top: 8px;
+            border-top: 1px solid #ddd;
+            font-size: 12px; color: #666;
+        }
+
+        .btn-delete {
+            background: #f44336; color: white;
+            padding: 6px 14px; font-size: 12px;
+            border: none; border-radius: 4px;
+            cursor: pointer; margin-top: 8px;
+            -webkit-appearance: none; appearance: none;
+        }
+
+        .btn-clear-all {
+            background: #ff5722; color: white;
+            padding: 10px 20px; font-size: 14px;
+            border: none; border-radius: 6px;
+            cursor: pointer; margin-top: 10px;
+            -webkit-appearance: none; appearance: none;
+        }
+
+        .no-history { text-align: center; color: #999; padding: 40px; font-size: 15px; }
+
+        /* PCでも見やすく */
+        @media (min-width: 768px) {
+            .header h1 { font-size: 22px; }
+            .player-card { padding: 14px 16px; }
+            .toggle-label { font-size: 12px; }
+            .btn-toggle { font-size: 15px; padding: 10px 4px; }
+            .player-name { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🀄 麻雀カウンター</h1>
+    </div>
+
+    <div class="players-grid" id="playersGrid">
+        <!-- プレイヤーカードがJavaScriptで生成される -->
+    </div>
+
+    <div class="control-panel">
+        <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
+        <button class="btn-history" onclick="showHistory()">📊 記録を確認</button>
+    </div>
+    
+    <!-- 履歴表示モーダル -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📊 対戦履歴</h2>
+                <span class="close" onclick="closeHistory()">&times;</span>
+            </div>
+            <div id="historyContent">
+                <!-- 履歴がここに表示される -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 和了記録モーダル -->
+    <div id="agariModal" class="agari-modal">
+        <div class="agari-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🎉 和了記録</h2>
+                <span class="close" onclick="closeAgariModal()">&times;</span>
+            </div>
+            
+            <form id="agariForm">
+                <div class="form-group">
+                    <label class="form-label">和了したプレイヤー</label>
+                    <select id="agariPlayer" class="select-input" required>
+                        <!-- JavaScriptで動的生成 -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">和了方法</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="agariType" value="tsumo" checked>
+                            <span>ツモ</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="agariType" value="ron">
+                            <span>ロン</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="ronFromGroup" style="display:none;">
+                    <label class="form-label">誰から？</label>
+                    <select id="ronFrom" class="select-input">
+                        <!-- JavaScriptで動的生成 -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">得点（点）</label>
+                    <input type="number" id="agariPoints" class="form-input" placeholder="例: 8000" required min="0" step="100">
+                </div>
+                
+                <button type="submit" class="btn-submit">✓ 記録する</button>
+                <button type="button" class="btn-cancel" onclick="closeAgariModal()">キャンセル</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // プレイヤーデータの初期化
+        const positions = ['東家', '南家', '西家', '北家'];
+        let players = [];
+        let currentAgariPlayer = null;
+        
+        // 初期化
+        function initPlayers() {
+            players = positions.map((pos, index) => ({
+                id: index,
+                position: pos,
+                name: pos,
+                furo: 0,      // 副露
+                reach: 0,     // リーチ
+                agari: 0,     // 和了回数
+                houjuu: 0,    // 放銃回数
+                agariDetails: [], // 和了の詳細記録
+                totalPoints: 0,   // 獲得点数合計
+                tsumoCount: 0,    // ツモ回数
+                ronCount: 0       // ロン回数
+            }));
+            renderPlayers();
+        }
+        
+        // プレイヤーカードのレンダリング
+        function renderPlayers() {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = '';
+            
+            players.forEach(player => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                const reachDisabled = player.furo > 0;
+                card.innerHTML = `
+                    <div class="player-header">
+                        <div class="player-name" onclick="editPlayerName(${player.id})" id="playerName${player.id}">${player.name}</div>
+                        <div class="player-position">${player.position}</div>
+                    </div>
+
+                    <div class="toggle-grid">
+                        <div class="toggle-item">
+                            <span class="toggle-label">副露</span>
+                            <button class="btn-toggle ${player.furo > 0 ? 'active' : ''}" onclick="toggleFuro(${player.id})">
+                                ${player.furo > 0 ? '✓ ON' : 'OFF'}
+                            </button>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label">リーチ</span>
+                            <button class="btn-toggle ${player.reach > 0 ? 'active' : ''} ${reachDisabled ? 'disabled' : ''}" onclick="toggleReach(${player.id})">
+                                ${player.reach > 0 ? '✓ ON' : reachDisabled ? '—' : 'OFF'}
+                            </button>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label">和了</span>
+                            <button class="btn-toggle ${player.agari > 0 ? 'active' : ''}" onclick="toggleAgari(${player.id})">
+                                ${player.agari > 0 ? '✓ ON' : 'OFF'}
+                            </button>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label">放銃</span>
+                            <button class="btn-toggle ${player.houjuu > 0 ? 'active' : ''}" onclick="toggleHoujuu(${player.id})">
+                                ${player.houjuu > 0 ? '✓ ON' : 'OFF'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-mini">
+                        <span>累計${player.agariDetails.length}和了</span>
+                        <span>平均 <strong>${player.agariDetails.length > 0 ? Math.round(player.totalPoints / player.agariDetails.length).toLocaleString() : 0}点</strong></span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+        
+        // カウンター更新
+        function updateCounter(playerId, type, change) {
+            const player = players[playerId];
+            player[type] = Math.max(0, player[type] + change); // 負の数にならないように
+            renderPlayers();
+        }
+        
+        // プレイヤー名編集
+        function editPlayerName(playerId) {
+            const player = players[playerId];
+            const nameElement = document.getElementById(`playerName${playerId}`);
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = player.name;
+            input.className = 'player-name-input';
+            
+            input.onblur = function() {
+                const newName = input.value.trim() || player.position;
+                player.name = newName;
+                renderPlayers();
+            };
+            
+            input.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            };
+            
+            nameElement.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+        
+        // 和了モーダルを開く
+        function openAgariModal(playerId) {
+            currentAgariPlayer = playerId;
+            const modal = document.getElementById('agariModal');
+            const agariPlayerSelect = document.getElementById('agariPlayer');
+            const ronFromSelect = document.getElementById('ronFrom');
+            
+            // プレイヤー選択肢を生成
+            agariPlayerSelect.innerHTML = players.map(p => 
+                `<option value="${p.id}" ${p.id === playerId ? 'selected' : ''}>${p.name}</option>`
+            ).join('');
+            
+            // ロン相手の選択肢を生成（和了者以外）
+            updateRonFromOptions();
+            
+            // フォームリセット
+            document.getElementById('agariForm').reset();
+            document.getElementById('ronFromGroup').style.display = 'none';
+            
+            // ラジオボタンの初期selected状態
+            updateRadioStyles();
+            
+            modal.style.display = 'block';
+        }
+        
+        // ラジオボタンのスタイルをJS制御で更新（Safari対応）
+        function updateRadioStyles() {
+            document.querySelectorAll('.radio-label').forEach(label => {
+                const radio = label.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    label.classList.add('selected');
+                } else {
+                    label.classList.remove('selected');
+                }
+            });
+        }
+        
+        // ロン相手の選択肢を更新
+        function updateRonFromOptions() {
+            const agariPlayerId = parseInt(document.getElementById('agariPlayer').value);
+            const ronFromSelect = document.getElementById('ronFrom');
+            ronFromSelect.innerHTML = players
+                .filter(p => p.id !== agariPlayerId)
+                .map(p => `<option value="${p.id}">${p.name}</option>`)
+                .join('');
+        }
+        
+        // 和了モーダルを閉じる
+        function closeAgariModal() {
+            document.getElementById('agariModal').style.display = 'none';
+            currentAgariPlayer = null;
+        }
+        
+        // 和了記録フォーム送信
+        document.addEventListener('DOMContentLoaded', function() {
+            // ラジオボタン変更時の処理
+            document.querySelectorAll('input[name="agariType"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const ronFromGroup = document.getElementById('ronFromGroup');
+                    ronFromGroup.style.display = this.value === 'ron' ? 'block' : 'none';
+                    updateRadioStyles();
+                });
+            });
+            
+            // 和了者変更時の処理
+            document.getElementById('agariPlayer').addEventListener('change', updateRonFromOptions);
+            
+            document.getElementById('agariForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const agariPlayerId = parseInt(document.getElementById('agariPlayer').value);
+                const agariType = document.querySelector('input[name="agariType"]:checked').value;
+                const points = parseInt(document.getElementById('agariPoints').value);
+                const ronFromId = agariType === 'ron' ? parseInt(document.getElementById('ronFrom').value) : null;
+                
+                const player = players[agariPlayerId];
+                player.agari = 1;  // 和了は常に1
+                player.totalPoints += points;
+                
+                if (agariType === 'tsumo') {
+                    player.tsumoCount++;
+                } else {
+                    player.ronCount++;
+                    // ロン相手の放銃カウントを1に設定
+                    players[ronFromId].houjuu = 1;
+                }
+                
+                // 和了詳細を記録
+                player.agariDetails.push({
+                    type: agariType,
+                    points: points,
+                    from: ronFromId !== null ? players[ronFromId].name : null,
+                    timestamp: new Date().toLocaleString('ja-JP')
+                });
+                
+                closeAgariModal();
+                renderPlayers();
+            });
+        });
+        
+        // 最後の和了を削除
+        function removeLastAgari(playerId) {
+            const player = players[playerId];
+            if (player.agari > 0 && player.agariDetails.length > 0) {
+                if (confirm('最後の和了記録を削除しますか？')) {
+                    const lastAgari = player.agariDetails.pop();
+                    player.agari--;
+                    player.totalPoints -= lastAgari.points;
+                    
+                    if (lastAgari.type === 'tsumo') {
+                        player.tsumoCount--;
+                    } else {
+                        player.ronCount--;
+                        // ロン相手の放銃を減らす
+                        const ronPlayer = players.find(p => p.name === lastAgari.from);
+                        if (ronPlayer) {
+                            ronPlayer.houjuu = Math.max(0, ronPlayer.houjuu - 1);
+                        }
+                    }
+                    
+                    renderPlayers();
+                }
+            }
+        }
+        
+        // 副露トグル
+        function toggleFuro(playerId) {
+            const player = players[playerId];
+            if (player.furo > 0) {
+                player.furo = 0;
+            } else {
+                player.furo = 1;
+                // 副露をONにしたらリーチを自動的にOFFにする
+                player.reach = 0;
+            }
+            renderPlayers();
+        }
+        
+        // リーチトグル
+        function toggleReach(playerId) {
+            const player = players[playerId];
+            if (player.reach > 0) {
+                player.reach = 0;
+            } else {
+                // リーチをONにする前に副露がONになっていないかチェック
+                if (player.furo > 0) {
+                    alert('副露している場合はリーチできません');
+                    return;
+                }
+                player.reach = 1;
+            }
+            renderPlayers();
+        }
+        
+        // 和了トグル
+        function toggleAgari(playerId) {
+            const player = players[playerId];
+            if (player.agari > 0) {
+                // OFFにする（最後の和了を削除）
+                if (player.agariDetails.length > 0) {
+                    const lastAgari = player.agariDetails.pop();
+                    player.agari = 0;
+                    player.totalPoints -= lastAgari.points;
+                    
+                    if (lastAgari.type === 'tsumo') {
+                        player.tsumoCount--;
+                    } else {
+                        player.ronCount--;
+                        // ロン相手の放銃を減らす
+                        const ronPlayer = players.find(p => p.name === lastAgari.from);
+                        if (ronPlayer) {
+                            ronPlayer.houjuu = 0;
+                        }
+                    }
+                } else {
+                    player.agari = 0;
+                }
+            } else {
+                // ONにする（和了モーダルを開く）
+                openAgariModal(playerId);
+            }
+            renderPlayers();
+        }
+        
+        // 放銃トグル
+        function toggleHoujuu(playerId) {
+            const player = players[playerId];
+            player.houjuu = player.houjuu > 0 ? 0 : 1;
+            renderPlayers();
+        }
+        
+        // 全リセット
+        function resetAll() {
+            if (confirm('本当に全てのカウントをリセットしますか？（プレイヤー名は保持されます）')) {
+                // 名前を保存
+                const savedNames = players.map(p => p.name);
+                
+                // 初期化
+                initPlayers();
+                
+                // 名前を復元
+                players.forEach((p, index) => {
+                    p.name = savedNames[index];
+                });
+                
+                renderPlayers();
+            }
+        }
+        
+        // データ保存
+        function saveData() {
+            const timestamp = new Date().toLocaleString('ja-JP');
+            
+            // 誰もあがっていなければ流局
+            const isRyukyoku = players.every(p => p.agari === 0);
+            
+            const summary = players.map(p => 
+                `${p.name}: 副露${p.furo} リーチ${p.reach} 和了${p.agari} 放銃${p.houjuu}`
+            ).join('\n');
+            
+            const data = `【麻雀記録 - ${timestamp}】${isRyukyoku ? '【流局】' : ''}\n\n${summary}`;
+            
+            // LocalStorageに保存
+            const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
+            savedGames.push({
+                timestamp: timestamp,
+                players: JSON.parse(JSON.stringify(players)),
+                isRyukyoku: isRyukyoku
+            });
+            localStorage.setItem('mahjongGames', JSON.stringify(savedGames));
+            
+            alert(`記録を保存しました！${isRyukyoku ? '\n\n🌊 流局としてカウントされました' : ''}\n\n` + data);
+            
+            // 保存後、累積データを保持してリセット
+            players.forEach(player => {
+                const totalPoints = player.totalPoints;
+                const agariDetails = player.agariDetails;
+                const tsumoCount = player.tsumoCount;
+                const ronCount = player.ronCount;
+                const name = player.name;
+                
+                player.furo = 0;
+                player.reach = 0;
+                player.agari = 0;
+                player.houjuu = 0;
+                
+                player.totalPoints = totalPoints;
+                player.agariDetails = agariDetails;
+                player.tsumoCount = tsumoCount;
+                player.ronCount = ronCount;
+                player.name = name;
+            });
+            
+            renderPlayers();
+        }
+        
+        // 履歴表示
+        function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
+            
+            if (savedGames.length === 0) {
+                content.innerHTML = '<div class="no-history">まだ記録がありません</div>';
+            } else {
+                // プレイヤーごとの統計を集計
+                const playerStats = {};
+                
+                // 初期化
+                players.forEach(p => {
+                    playerStats[p.name] = {
+                        gamesPlayed: 0,
+                        furoGames: 0,      // 副露したゲーム数
+                        reachGames: 0,     // リーチしたゲーム数
+                        totalAgari: 0,     // 総和了回数
+                        tsumoCount: 0,     // ツモ回数
+                        ronCount: 0,       // ロン回数
+                        totalPoints: 0,    // 総得点
+                        ronFrom: {}        // 誰からロンしたか {プレイヤー名: {回数, 得点}}
+                    };
+                });
+                
+                // 全ゲームを集計
+                savedGames.forEach(game => {
+                    game.players.forEach(p => {
+                        if (playerStats[p.name]) {
+                            playerStats[p.name].gamesPlayed++;
+                            if (p.furo > 0) playerStats[p.name].furoGames++;
+                            if (p.reach > 0) playerStats[p.name].reachGames++;
+                            playerStats[p.name].totalAgari += p.agari;
+                            playerStats[p.name].tsumoCount += (p.tsumoCount || 0);
+                            playerStats[p.name].ronCount += (p.ronCount || 0);
+                            playerStats[p.name].totalPoints += (p.totalPoints || 0);
+                            
+                            // 和了詳細から誰からロンしたかを集計
+                            if (p.agariDetails && p.agariDetails.length > 0) {
+                                p.agariDetails.forEach(detail => {
+                                    if (detail.type === 'ron' && detail.from) {
+                                        if (!playerStats[p.name].ronFrom[detail.from]) {
+                                            playerStats[p.name].ronFrom[detail.from] = {
+                                                count: 0,
+                                                points: 0
+                                            };
+                                        }
+                                        playerStats[p.name].ronFrom[detail.from].count++;
+                                        playerStats[p.name].ronFrom[detail.from].points += detail.points;
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+                
+                const ryukyokuCount = savedGames.filter(g => g.isRyukyoku).length;
+                
+                let html = `
+                    <div style="margin-bottom: 30px; padding: 20px; background: #e8f5e9; border-radius: 8px;">
+                        <h3 style="margin: 0 0 10px 0; color: #2e7d32;">📊 総合統計</h3>
+                        <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                            <div style="font-size: 16px; color: #333;">
+                                <strong>記録されたゲーム数: ${savedGames.length}局</strong>
+                            </div>
+                            <div style="font-size: 16px; color: #1565C0;">
+                                🌊 <strong>流局: ${ryukyokuCount}局</strong>
+                                <span style="font-size: 13px; color: #666; margin-left: 6px;">(${savedGames.length > 0 ? ((ryukyokuCount / savedGames.length) * 100).toFixed(1) : 0}%)</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // プレイヤーごとの統計を表示
+                Object.keys(playerStats).forEach(playerName => {
+                    const stats = playerStats[playerName];
+                    const tsumoRate = stats.totalAgari > 0 ? ((stats.tsumoCount / stats.totalAgari) * 100).toFixed(1) : 0;
+                    const furoRate = stats.gamesPlayed > 0 ? ((stats.furoGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
+                    const agariRate = stats.gamesPlayed > 0 ? ((stats.totalAgari / stats.gamesPlayed) * 100).toFixed(1) : 0;
+                    const avgPoints = stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0;
+                    
+                    html += `
+                        <div class="history-item" style="margin-bottom: 20px;">
+                            <div class="history-header" style="font-size: 18px; margin-bottom: 15px;">
+                                👤 ${playerName}
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                <div style="background: white; padding: 12px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 13px;">参加ゲーム数</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #333;">${stats.gamesPlayed}局</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 13px;">和了率</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #E91E63;">${agariRate}%</div>
+                                    <div style="font-size: 12px; color: #999;">${stats.totalAgari}/${stats.gamesPlayed}局</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 13px;">副露率</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #FF9800;">${furoRate}%</div>
+                                    <div style="font-size: 12px; color: #999;">${stats.furoGames}/${stats.gamesPlayed}局</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 13px;">ツモ率</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #4CAF50;">${tsumoRate}%</div>
+                                    <div style="font-size: 12px; color: #999;">${stats.tsumoCount}/${stats.totalAgari}回</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 13px;">総得点</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #2196F3;">${stats.totalPoints.toLocaleString()}点</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 13px;">平均得点</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #9C27B0;">${avgPoints.toLocaleString()}点</div>
+                                </div>
+                            </div>
+                    `;
+                    
+                    // 誰からロンしたかの詳細
+                    if (Object.keys(stats.ronFrom).length > 0) {
+                        html += `
+                            <div style="background: #fff3e0; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                                <div style="font-weight: bold; margin-bottom: 10px; color: #E65100;">🎯 ロン相手の内訳</div>
+                                <div style="display: grid; gap: 8px;">
+                        `;
+                        
+                        Object.keys(stats.ronFrom).forEach(fromPlayer => {
+                            const ronData = stats.ronFrom[fromPlayer];
+                            html += `
+                                <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 4px;">
+                                    <span style="font-weight: bold;">${fromPlayer}</span>
+                                    <span>${ronData.count}回 / ${ronData.points.toLocaleString()}点</span>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                });
+                
+                // 各ゲームの履歴
+                html += '<h3 style="margin: 30px 0 15px 0; color: #333;">📝 ゲーム履歴</h3>';
+                
+                savedGames.reverse().forEach((game, index) => {
+                    const actualIndex = savedGames.length - 1 - index;
+                    const totalFuro = game.players.reduce((sum, p) => sum + p.furo, 0);
+                    const totalReach = game.players.reduce((sum, p) => sum + p.reach, 0);
+                    const totalAgari = game.players.reduce((sum, p) => sum + p.agari, 0);
+                    const totalHoujuu = game.players.reduce((sum, p) => sum + p.houjuu, 0);
+                    const totalPoints = game.players.reduce((sum, p) => sum + (p.totalPoints || 0), 0);
+                    const ryukyokuBadge = game.isRyukyoku 
+                        ? '<span style="background:#1565C0;color:white;padding:2px 10px;border-radius:12px;font-size:13px;margin-left:10px;">🌊 流局</span>' 
+                        : '';
+                    
+                    html += `
+                        <div class="history-item" style="${game.isRyukyoku ? 'border-left-color: #1565C0;' : ''}">
+                            <div class="history-header">🀄 ${game.timestamp}${ryukyokuBadge}</div>
+                            <div class="history-players">
+                                ${game.players.map(p => `
+                                    <div class="history-player">
+                                        <div class="history-player-name">${p.name}</div>
+                                        <div class="history-stats">
+                                            副露: ${p.furo} | リーチ: ${p.reach}<br>
+                                            和了: ${p.agari} (ツモ: ${p.tsumoCount || 0} / ロン: ${p.ronCount || 0})<br>
+                                            放銃: ${p.houjuu} | 獲得: ${(p.totalPoints || 0).toLocaleString()}点
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="history-summary">
+                                <strong>合計:</strong> 
+                                副露 ${totalFuro} | リーチ ${totalReach} | 和了 ${totalAgari} | 放銃 ${totalHoujuu} | 総得点 ${totalPoints.toLocaleString()}点
+                            </div>
+                            <button class="btn-delete" onclick="deleteHistory(${actualIndex})">🗑️ 削除</button>
+                        </div>
+                    `;
+                });
+                
+                html += '<button class="btn-clear-all" onclick="clearAllHistory()">🗑️ 全履歴を削除</button>';
+                content.innerHTML = html;
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        // 履歴を閉じる
+        function closeHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+        
+        // 特定の履歴を削除
+        function deleteHistory(index) {
+            if (confirm('この記録を削除しますか？')) {
+                const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
+                savedGames.splice(index, 1);
+                localStorage.setItem('mahjongGames', JSON.stringify(savedGames));
+                showHistory(); // 再表示
+            }
+        }
+        
+        // 全履歴を削除
+        function clearAllHistory() {
+            if (confirm('本当に全ての記録を削除しますか？この操作は取り消せません。')) {
+                localStorage.removeItem('mahjongGames');
+                showHistory(); // 再表示
+            }
+        }
+        
+        // モーダルの外側をクリックで閉じる
+        window.onclick = function(event) {
+            const historyModal = document.getElementById('historyModal');
+            const agariModal = document.getElementById('agariModal');
+            if (event.target == historyModal) {
+                closeHistory();
+            }
+            if (event.target == agariModal) {
+                closeAgariModal();
+            }
+        }
+        
+        // ページ読み込み時に初期化
+        initPlayers();
+    </script>
+</body>
+</html>
