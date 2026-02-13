@@ -244,9 +244,7 @@
         }
 
         .btn-save {
-            -webkit-box-flex: 1;
-            -ms-flex: 1;
-            flex: 1;
+            width: 100%;
             background: #2196F3;
             color: white;
             padding: 12px 0;
@@ -257,6 +255,28 @@
             cursor: pointer;
             -webkit-appearance: none;
             appearance: none;
+        }
+
+        .btn-history-header {
+            background: rgba(156, 39, 176, 0.9);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            width: 40px;
+            height: 32px;
+            font-size: 18px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
         }
 
         .btn-history {
@@ -273,6 +293,41 @@
             cursor: pointer;
             -webkit-appearance: none;
             appearance: none;
+        }
+
+        .btn-back {
+            width: 100%;
+            background: #607D8B;
+            color: white;
+            padding: 12px 0;
+            font-size: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* 記録確認画面 */
+        #historyScreen {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        .history-content {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px;
         }
 
         /* ===== モーダル共通 ===== */
@@ -393,6 +448,42 @@
         .radio-label input[type="radio"] { margin-right: 6px; width: 16px; height: 16px; }
         .radio-label.selected { border-color: #4CAF50; background: #e8f5e9; }
 
+        /* 一発チェックボックス */
+        .ippatsu-group {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .ippatsu-group.checked {
+            border-color: #FF9800;
+            background: #fff8e1;
+        }
+
+        .ippatsu-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .ippatsu-group span {
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .ippatsu-group.checked span {
+            color: #E65100;
+        }
+
         .select-input {
             width: 100%;
             padding: 10px;
@@ -498,6 +589,112 @@
 
         .no-history { text-align: center; color: #999; padding: 40px; font-size: 15px; }
 
+        /* 本場数エリア */
+        .honba-bar {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 4px 10px 6px;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        .honba-label {
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+        }
+
+        .honba-count {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .honba-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        /* 累積統計エリア */
+        .stats-area {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #f0f0f0;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        /* 入力画面 */
+        #inputScreen {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        .stat-item {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            text-align: center;
+            background: #f8f8f8;
+            border-radius: 6px;
+            padding: 4px 2px;
+        }
+
+        .stat-item-label {
+            font-size: 9px;
+            color: #999;
+            display: block;
+        }
+
+        .stat-item-value {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            display: block;
+        }
+
+        .stat-item-value.agari { color: #E91E63; }
+        .stat-item-value.houjuu { color: #f44336; }
         /* PCでも見やすく */
         @media (min-width: 768px) {
             .header h1 { font-size: 22px; }
@@ -509,29 +706,43 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🀄 麻雀カウンター</h1>
+    <!-- 入力画面 -->
+    <div id="inputScreen">
+        <div class="header">
+            <h1>🀄 麻雀カウンター</h1>
+        </div>
+        <div class="honba-bar">
+            <button class="honba-btn" onclick="changeKyoku(-1)">◀</button>
+            <span class="honba-label" id="kyokuLabel">東1局</span>
+            <button class="honba-btn" onclick="changeKyoku(1)">▶</button>
+            <span style="color:rgba(255,255,255,0.4);margin:0 4px;">|</span>
+            <button class="honba-btn" onclick="changeHonba(-1)">－</button>
+            <span class="honba-count" id="honbaCount">0</span>
+            <span class="honba-label">本場</span>
+            <button class="honba-btn" onclick="changeHonba(1)">＋</button>
+            <span style="color:rgba(255,255,255,0.4);margin:0 4px;">|</span>
+            <button class="btn-history-header" onclick="showHistoryScreen()">📊</button>
+        </div>
+
+        <div class="players-grid" id="playersGrid">
+            <!-- プレイヤーカードがJavaScriptで生成される -->
+        </div>
+
+        <div class="control-panel">
+            <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
+        </div>
     </div>
 
-    <div class="players-grid" id="playersGrid">
-        <!-- プレイヤーカードがJavaScriptで生成される -->
-    </div>
-
-    <div class="control-panel">
-        <button class="btn-history" onclick="showHistory()">📊 記録を確認</button>
-        <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
-    </div>
-    
-    <!-- 履歴表示モーダル -->
-    <div id="historyModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">📊 対戦履歴</h2>
-                <span class="close" onclick="closeHistory()">&times;</span>
-            </div>
-            <div id="historyContent">
-                <!-- 履歴がここに表示される -->
-            </div>
+    <!-- 記録確認画面 -->
+    <div id="historyScreen" style="display: none;">
+        <div class="header">
+            <h1>📊 対戦履歴</h1>
+        </div>
+        <div class="history-content" id="historyContent">
+            <!-- 履歴がここに表示される -->
+        </div>
+        <div class="control-panel">
+            <button class="btn-back" onclick="showInputScreen()">← 入力画面に戻る</button>
         </div>
     </div>
     
@@ -571,6 +782,14 @@
                         <!-- JavaScriptで動的生成 -->
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">一発</label>
+                    <label class="ippatsu-group" id="ippatsuLabel">
+                        <input type="checkbox" id="ippatsuCheck" onchange="updateIppatsuStyle()">
+                        <span>⚡ 一発和了</span>
+                    </label>
+                </div>
                 
                 <div class="form-group">
                     <label class="form-label">得点（点）</label>
@@ -588,6 +807,36 @@
         const positions = ['東家', '南家', '西家', '北家'];
         let players = [];
         let currentAgariPlayer = null;
+        let honba = 0;
+        let kyoku = 0;
+
+        const kyokuLabels = [
+            '東1局','東2局','東3局','東4局',
+            '南1局','南2局','南3局','南4局'
+        ];
+
+        function changeKyoku(delta) {
+            kyoku = (kyoku + delta + kyokuLabels.length) % kyokuLabels.length;
+            if (kyoku < 0) kyoku = 0;
+            document.getElementById('kyokuLabel').textContent = kyokuLabels[kyoku];
+        }
+
+        // 本場数変更
+        function changeHonba(delta) {
+            honba = Math.max(0, honba + delta);
+            document.getElementById('honbaCount').textContent = honba;
+        }
+        
+        // 一発チェックボックスのスタイル更新
+        function updateIppatsuStyle() {
+            const cb = document.getElementById('ippatsuCheck');
+            const label = document.getElementById('ippatsuLabel');
+            if (cb.checked) {
+                label.classList.add('checked');
+            } else {
+                label.classList.remove('checked');
+            }
+        }
         
         // 名前をLocalStorageに保存
         function savePlayerNames() {
@@ -597,7 +846,6 @@
         
         // 初期化
         function initPlayers() {
-            // 前回の名前を読み込む
             const savedNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || 'null');
             
             players = positions.map((pos, index) => ({
@@ -611,7 +859,8 @@
                 agariDetails: [],
                 totalPoints: 0,
                 tsumoCount: 0,
-                ronCount: 0
+                ronCount: 0,
+                totalHoujuu: 0   // 累積放銃回数
             }));
             renderPlayers();
         }
@@ -644,23 +893,12 @@
                                 ${player.reach > 0 ? '✓ ON' : reachDisabled ? '—' : 'OFF'}
                             </button>
                         </div>
-                        <div class="toggle-item">
+                        <div class="toggle-item" style="width: 100%;">
                             <span class="toggle-label">和了</span>
-                            <button class="btn-toggle ${player.agari > 0 ? 'active' : ''}" onclick="toggleAgari(${player.id})">
+                            <button class="btn-toggle ${player.agari > 0 ? 'active' : ''}" onclick="toggleAgari(${player.id})" style="width:100%;">
                                 ${player.agari > 0 ? '✓ ON' : 'OFF'}
                             </button>
                         </div>
-                        <div class="toggle-item">
-                            <span class="toggle-label">放銃</span>
-                            <button class="btn-toggle ${player.houjuu > 0 ? 'active' : ''}" onclick="toggleHoujuu(${player.id})">
-                                ${player.houjuu > 0 ? '✓ ON' : 'OFF'}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="stats-mini">
-                        <span>累計${player.agariDetails.length}和了</span>
-                        <span>平均 <strong>${player.agariDetails.length > 0 ? Math.round(player.totalPoints / player.agariDetails.length).toLocaleString() : 0}点</strong></span>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -720,6 +958,7 @@
             // フォームリセット
             document.getElementById('agariForm').reset();
             document.getElementById('ronFromGroup').style.display = 'none';
+            document.getElementById('ippatsuLabel').classList.remove('checked');
             
             // ラジオボタンの初期selected状態
             updateRadioStyles();
@@ -776,17 +1015,18 @@
                 const agariType = document.querySelector('input[name="agariType"]:checked').value;
                 const points = parseInt(document.getElementById('agariPoints').value);
                 const ronFromId = agariType === 'ron' ? parseInt(document.getElementById('ronFrom').value) : null;
+                const isIppatsu = document.getElementById('ippatsuCheck').checked;
                 
                 const player = players[agariPlayerId];
-                player.agari = 1;  // 和了は常に1
+                player.agari = 1;
                 player.totalPoints += points;
                 
                 if (agariType === 'tsumo') {
                     player.tsumoCount++;
                 } else {
                     player.ronCount++;
-                    // ロン相手の放銃カウントを1に設定
                     players[ronFromId].houjuu = 1;
+                    players[ronFromId].totalHoujuu = (players[ronFromId].totalHoujuu || 0) + 1;
                 }
                 
                 // 和了詳細を記録
@@ -794,6 +1034,7 @@
                     type: agariType,
                     points: points,
                     from: ronFromId !== null ? players[ronFromId].name : null,
+                    ippatsu: isIppatsu,
                     timestamp: new Date().toLocaleString('ja-JP')
                 });
                 
@@ -860,7 +1101,6 @@
         function toggleAgari(playerId) {
             const player = players[playerId];
             if (player.agari > 0) {
-                // OFFにする（今局の和了を取り消し）
                 if (player.agariDetails.length > 0) {
                     const lastAgari = player.agariDetails.pop();
                     player.agari = 0;
@@ -870,14 +1110,16 @@
                     } else {
                         player.ronCount--;
                         const ronPlayer = players.find(p => p.name === lastAgari.from);
-                        if (ronPlayer) ronPlayer.houjuu = 0;
+                        if (ronPlayer) {
+                            ronPlayer.houjuu = 0;
+                            ronPlayer.totalHoujuu = Math.max(0, (ronPlayer.totalHoujuu || 0) - 1);
+                        }
                     }
                 } else {
                     player.agari = 0;
                 }
                 renderPlayers();
             } else {
-                // 他のプレイヤーがすでに和了していないか確認
                 const alreadyAgari = players.find(p => p.id !== playerId && p.agari > 0);
                 if (alreadyAgari) {
                     alert(`${alreadyAgari.name}がすでに和了しています。\n1局で和了できるのは1人だけです。`);
@@ -926,6 +1168,8 @@
             const gameRecord = {
                 timestamp: timestamp,
                 isRyukyoku: isRyukyoku,
+                kyoku: kyokuLabels[kyoku],
+                honba: honba,
                 players: players.map(p => ({
                     id: p.id,
                     name: p.name,
@@ -945,20 +1189,41 @@
             
             alert(`記録を保存しました！${isRyukyoku ? '\n\n🌊 流局としてカウントされました' : ''}\n\n` + data);
             
-            // 保存後、今局フラグのみリセット（累積データ・名前は保持）
+            // 本場数・局の自動更新
+            if (isRyukyoku) {
+                honba++;
+            } else {
+                honba = 0;
+                kyoku = Math.min(kyokuLabels.length - 1, kyoku + 1);
+                document.getElementById('kyokuLabel').textContent = kyokuLabels[kyoku];
+            }
+            document.getElementById('honbaCount').textContent = honba;
+            
+            // 保存後、今局フラグのみリセット（名前・累積統計は保持）
             players.forEach(player => {
                 player.furo = 0;
                 player.reach = 0;
                 player.agari = 0;
                 player.houjuu = 0;
-                // 累積データはそのまま保持
+                // totalHoujuu・agariDetails・totalPoints・tsumoCount・ronCount・nameはそのまま保持
             });
             renderPlayers();
         }
         
+        // 画面切り替え
+        function showInputScreen() {
+            document.getElementById('inputScreen').style.display = 'flex';
+            document.getElementById('historyScreen').style.display = 'none';
+        }
+
+        function showHistoryScreen() {
+            document.getElementById('inputScreen').style.display = 'none';
+            document.getElementById('historyScreen').style.display = 'flex';
+            loadHistory();
+        }
+
         // 履歴表示
-        function showHistory() {
-            const modal = document.getElementById('historyModal');
+        function loadHistory() {
             const content = document.getElementById('historyContent');
             const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
             
@@ -972,7 +1237,7 @@
                 allPlayerNames.forEach(name => {
                     playerStats[name] = {
                         gamesPlayed: 0, furoGames: 0, reachGames: 0,
-                        houjuuGames: 0,
+                        houjuuGames: 0, ippatsuCount: 0,
                         totalAgari: 0, tsumoCount: 0, ronCount: 0,
                         totalPoints: 0, ronFrom: {}
                     };
@@ -991,6 +1256,7 @@
                             const detail = p.agariDetails && p.agariDetails[0];
                             if (detail) {
                                 st.totalPoints += detail.points;
+                                if (detail.ippatsu) st.ippatsuCount++;
                                 if (detail.type === 'tsumo') {
                                     st.tsumoCount++;
                                 } else {
@@ -1029,6 +1295,7 @@
                     const furoRate = stats.gamesPlayed > 0 ? ((stats.furoGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const agariRate = stats.gamesPlayed > 0 ? ((stats.totalAgari / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const houjuuRate = stats.gamesPlayed > 0 ? ((stats.houjuuGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
+                    const ippatsuRate = stats.totalAgari > 0 ? ((stats.ippatsuCount / stats.totalAgari) * 100).toFixed(1) : 0;
                     const avgPoints = stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0;
                     
                     html += `
@@ -1036,7 +1303,6 @@
                             <div class="history-header" style="font-size: 18px; margin-bottom: 15px;">
                                 👤 ${playerName}
                             </div>
-                            
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px;">
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
                                     <div style="color: #666; font-size: 12px;">参加ゲーム数</div>
@@ -1061,6 +1327,11 @@
                                     <div style="color: #666; font-size: 12px;">ツモ率</div>
                                     <div style="font-size: 22px; font-weight: bold; color: #4CAF50;">${tsumoRate}%</div>
                                     <div style="font-size: 11px; color: #999;">${stats.tsumoCount}/${stats.totalAgari}回</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">一発率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #FF9800;">⚡${ippatsuRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.ippatsuCount}/${stats.totalAgari}回</div>
                                 </div>
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
                                     <div style="color: #666; font-size: 12px;">総得点</div>
@@ -1110,28 +1381,34 @@
                     const totalAgari = game.players.reduce((sum, p) => sum + p.agari, 0);
                     const totalHoujuu = game.players.reduce((sum, p) => sum + p.houjuu, 0);
                     const totalPoints = game.players.reduce((sum, p) => sum + (p.totalPoints || 0), 0);
+                    const kyokuBadge = game.kyoku 
+                        ? `<span style="background:#37474F;color:white;padding:2px 8px;border-radius:12px;font-size:12px;margin-left:8px;">${game.kyoku}${game.honba > 0 ? ' ' + game.honba + '本場' : ''}</span>`
+                        : '';
                     const ryukyokuBadge = game.isRyukyoku 
-                        ? '<span style="background:#1565C0;color:white;padding:2px 10px;border-radius:12px;font-size:13px;margin-left:10px;">🌊 流局</span>' 
+                        ? '<span style="background:#1565C0;color:white;padding:2px 10px;border-radius:12px;font-size:13px;margin-left:8px;">🌊 流局</span>' 
                         : '';
                     
                     html += `
                         <div class="history-item" style="${game.isRyukyoku ? 'border-left-color: #1565C0;' : ''}">
-                            <div class="history-header">🀄 ${game.timestamp}${ryukyokuBadge}</div>
+                            <div class="history-header">🀄 ${game.timestamp}${kyokuBadge}${ryukyokuBadge}</div>
                             <div class="history-players">
-                                ${game.players.map(p => `
+                                ${game.players.map(p => {
+                                    const detail = p.agariDetails && p.agariDetails[0];
+                                    const ippatsuBadge = detail && detail.ippatsu ? ' <span style="color:#E65100;font-weight:bold;">⚡一発</span>' : '';
+                                    const agariDetail = detail ? ` (${detail.type === 'tsumo' ? 'ツモ' : 'ロン'}${detail.from ? '←' + detail.from : ''}${ippatsuBadge})` : '';
+                                    return `
                                     <div class="history-player">
                                         <div class="history-player-name">${p.name}</div>
                                         <div class="history-stats">
                                             副露: ${p.furo} | リーチ: ${p.reach}<br>
-                                            和了: ${p.agari} (ツモ: ${p.tsumoCount || 0} / ロン: ${p.ronCount || 0})<br>
+                                            和了: ${p.agari}${agariDetail}<br>
                                             放銃: ${p.houjuu} | 獲得: ${(p.totalPoints || 0).toLocaleString()}点
                                         </div>
-                                    </div>
-                                `).join('')}
+                                    </div>`;
+                                }).join('')}
                             </div>
                             <div class="history-summary">
-                                <strong>合計:</strong> 
-                                副露 ${totalFuro} | リーチ ${totalReach} | 和了 ${totalAgari} | 放銃 ${totalHoujuu} | 総得点 ${totalPoints.toLocaleString()}点
+                                <strong>合計:</strong> 副露 ${totalFuro} | リーチ ${totalReach} | 和了 ${totalAgari} | 放銃 ${totalHoujuu} | 総得点 ${totalPoints.toLocaleString()}点
                             </div>
                             <button class="btn-delete" onclick="deleteHistory(${actualIndex})">🗑️ 削除</button>
                         </div>
@@ -1146,13 +1423,6 @@
                 `;
                 content.innerHTML = html;
             }
-            
-            modal.style.display = 'block';
-        }
-        
-        // 履歴を閉じる
-        function closeHistory() {
-            document.getElementById('historyModal').style.display = 'none';
         }
         
         // 特定の履歴を削除
@@ -1161,7 +1431,7 @@
                 const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
                 savedGames.splice(index, 1);
                 localStorage.setItem('mahjongGames', JSON.stringify(savedGames));
-                showHistory(); // 再表示
+                loadHistory();
             }
         }
         
@@ -1169,7 +1439,7 @@
         function clearAllHistory() {
             if (confirm('本当に全ての記録を削除しますか？この操作は取り消せません。')) {
                 localStorage.removeItem('mahjongGames');
-                showHistory();
+                loadHistory();
             }
         }
         
@@ -1220,13 +1490,9 @@
             URL.revokeObjectURL(url);
         }
         
-        // モーダルの外側をクリックで閉じる
+        // モーダルの外側をクリックで閉じる（和了モーダルのみ）
         window.onclick = function(event) {
-            const historyModal = document.getElementById('historyModal');
             const agariModal = document.getElementById('agariModal');
-            if (event.target == historyModal) {
-                closeHistory();
-            }
             if (event.target == agariModal) {
                 closeAgariModal();
             }
