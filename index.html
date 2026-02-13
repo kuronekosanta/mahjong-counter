@@ -64,6 +64,11 @@
             -ms-flex: 1;
             flex: 1;
             min-height: 0;
+            -webkit-box-align: stretch;
+            -ms-flex-align: stretch;
+            align-items: stretch;
+            -ms-flex-line-pack: stretch;
+            align-content: stretch;
         }
 
         .player-card {
@@ -73,6 +78,7 @@
             -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             width: calc(50% - 3px);
+            height: calc(50% - 3px);
             display: -webkit-box;
             display: -ms-flexbox;
             display: flex;
@@ -80,7 +86,8 @@
             -webkit-box-direction: normal;
             -ms-flex-direction: column;
             flex-direction: column;
-            overflow: hidden;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
         }
 
         /* カードヘッダー */
@@ -145,10 +152,22 @@
             -webkit-box-flex: 1;
             -ms-flex: 1;
             flex: 1;
+            -ms-flex-line-pack: stretch;
+            align-content: stretch;
         }
 
         .toggle-item {
             width: calc(50% - 2px);
+            height: calc(50% - 2px);
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
         }
 
         .toggle-label {
@@ -156,14 +175,18 @@
             color: #888;
             margin-bottom: 2px;
             display: block;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
         }
 
         .btn-toggle {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
             width: 100%;
-            padding: 7px 4px;
             border: 1.5px solid #ddd;
             border-radius: 7px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             background: #f8f8f8;
@@ -172,6 +195,9 @@
             appearance: none;
             -webkit-transition: all 0.15s;
             transition: all 0.15s;
+            display: block;
+            text-align: center;
+            padding: 0;
         }
 
         .btn-toggle.active {
@@ -805,30 +831,31 @@
         function toggleAgari(playerId) {
             const player = players[playerId];
             if (player.agari > 0) {
-                // OFFにする（最後の和了を削除）
+                // OFFにする（今局の和了を取り消し）
                 if (player.agariDetails.length > 0) {
                     const lastAgari = player.agariDetails.pop();
                     player.agari = 0;
                     player.totalPoints -= lastAgari.points;
-                    
                     if (lastAgari.type === 'tsumo') {
                         player.tsumoCount--;
                     } else {
                         player.ronCount--;
-                        // ロン相手の放銃を減らす
                         const ronPlayer = players.find(p => p.name === lastAgari.from);
-                        if (ronPlayer) {
-                            ronPlayer.houjuu = 0;
-                        }
+                        if (ronPlayer) ronPlayer.houjuu = 0;
                     }
                 } else {
                     player.agari = 0;
                 }
+                renderPlayers();
             } else {
-                // ONにする（和了モーダルを開く）
+                // 他のプレイヤーがすでに和了していないか確認
+                const alreadyAgari = players.find(p => p.id !== playerId && p.agari > 0);
+                if (alreadyAgari) {
+                    alert(`${alreadyAgari.name}がすでに和了しています。\n1局で和了できるのは1人だけです。`);
+                    return;
+                }
                 openAgariModal(playerId);
             }
-            renderPlayers();
         }
         
         // 放銃トグル
@@ -859,47 +886,44 @@
         // データ保存
         function saveData() {
             const timestamp = new Date().toLocaleString('ja-JP');
-            
-            // 誰もあがっていなければ流局
             const isRyukyoku = players.every(p => p.agari === 0);
-            
             const summary = players.map(p => 
                 `${p.name}: 副露${p.furo} リーチ${p.reach} 和了${p.agari} 放銃${p.houjuu}`
             ).join('\n');
-            
             const data = `【麻雀記録 - ${timestamp}】${isRyukyoku ? '【流局】' : ''}\n\n${summary}`;
             
-            // LocalStorageに保存
+            // 今局のデータのみを保存（累積ではない）
             const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
-            savedGames.push({
+            const gameRecord = {
                 timestamp: timestamp,
-                players: JSON.parse(JSON.stringify(players)),
-                isRyukyoku: isRyukyoku
-            });
+                isRyukyoku: isRyukyoku,
+                players: players.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    position: p.position,
+                    furo: p.furo,
+                    reach: p.reach,
+                    agari: p.agari,
+                    houjuu: p.houjuu,
+                    agariDetails: p.agari > 0 && p.agariDetails.length > 0 ? [p.agariDetails[p.agariDetails.length - 1]] : [],
+                    tsumoCount: p.agari > 0 && p.agariDetails.length > 0 && p.agariDetails[p.agariDetails.length - 1].type === 'tsumo' ? 1 : 0,
+                    ronCount: p.agari > 0 && p.agariDetails.length > 0 && p.agariDetails[p.agariDetails.length - 1].type === 'ron' ? 1 : 0,
+                    totalPoints: p.agari > 0 && p.agariDetails.length > 0 ? p.agariDetails[p.agariDetails.length - 1].points : 0
+                }))
+            };
+            savedGames.push(gameRecord);
             localStorage.setItem('mahjongGames', JSON.stringify(savedGames));
             
             alert(`記録を保存しました！${isRyukyoku ? '\n\n🌊 流局としてカウントされました' : ''}\n\n` + data);
             
-            // 保存後、累積データを保持してリセット
+            // 保存後、今局フラグのみリセット（累積データ・名前は保持）
             players.forEach(player => {
-                const totalPoints = player.totalPoints;
-                const agariDetails = player.agariDetails;
-                const tsumoCount = player.tsumoCount;
-                const ronCount = player.ronCount;
-                const name = player.name;
-                
                 player.furo = 0;
                 player.reach = 0;
                 player.agari = 0;
                 player.houjuu = 0;
-                
-                player.totalPoints = totalPoints;
-                player.agariDetails = agariDetails;
-                player.tsumoCount = tsumoCount;
-                player.ronCount = ronCount;
-                player.name = name;
+                // 累積データはそのまま保持
             });
-            
             renderPlayers();
         }
         
@@ -914,47 +938,38 @@
             } else {
                 // プレイヤーごとの統計を集計
                 const playerStats = {};
-                
-                // 初期化
-                players.forEach(p => {
-                    playerStats[p.name] = {
-                        gamesPlayed: 0,
-                        furoGames: 0,      // 副露したゲーム数
-                        reachGames: 0,     // リーチしたゲーム数
-                        totalAgari: 0,     // 総和了回数
-                        tsumoCount: 0,     // ツモ回数
-                        ronCount: 0,       // ロン回数
-                        totalPoints: 0,    // 総得点
-                        ronFrom: {}        // 誰からロンしたか {プレイヤー名: {回数, 得点}}
+                const allPlayerNames = new Set();
+                savedGames.forEach(game => game.players.forEach(p => allPlayerNames.add(p.name)));
+                allPlayerNames.forEach(name => {
+                    playerStats[name] = {
+                        gamesPlayed: 0, furoGames: 0, reachGames: 0,
+                        totalAgari: 0, tsumoCount: 0, ronCount: 0,
+                        totalPoints: 0, ronFrom: {}
                     };
                 });
                 
-                // 全ゲームを集計
                 savedGames.forEach(game => {
                     game.players.forEach(p => {
-                        if (playerStats[p.name]) {
-                            playerStats[p.name].gamesPlayed++;
-                            if (p.furo > 0) playerStats[p.name].furoGames++;
-                            if (p.reach > 0) playerStats[p.name].reachGames++;
-                            playerStats[p.name].totalAgari += p.agari;
-                            playerStats[p.name].tsumoCount += (p.tsumoCount || 0);
-                            playerStats[p.name].ronCount += (p.ronCount || 0);
-                            playerStats[p.name].totalPoints += (p.totalPoints || 0);
-                            
-                            // 和了詳細から誰からロンしたかを集計
-                            if (p.agariDetails && p.agariDetails.length > 0) {
-                                p.agariDetails.forEach(detail => {
-                                    if (detail.type === 'ron' && detail.from) {
-                                        if (!playerStats[p.name].ronFrom[detail.from]) {
-                                            playerStats[p.name].ronFrom[detail.from] = {
-                                                count: 0,
-                                                points: 0
-                                            };
-                                        }
-                                        playerStats[p.name].ronFrom[detail.from].count++;
-                                        playerStats[p.name].ronFrom[detail.from].points += detail.points;
+                        if (!playerStats[p.name]) return;
+                        const st = playerStats[p.name];
+                        st.gamesPlayed++;
+                        if (p.furo > 0) st.furoGames++;
+                        if (p.reach > 0) st.reachGames++;
+                        if (p.agari > 0) {
+                            st.totalAgari++;
+                            const detail = p.agariDetails && p.agariDetails[0];
+                            if (detail) {
+                                st.totalPoints += detail.points;
+                                if (detail.type === 'tsumo') {
+                                    st.tsumoCount++;
+                                } else {
+                                    st.ronCount++;
+                                    if (detail.from) {
+                                        if (!st.ronFrom[detail.from]) st.ronFrom[detail.from] = { count: 0, points: 0 };
+                                        st.ronFrom[detail.from].count++;
+                                        st.ronFrom[detail.from].points += detail.points;
                                     }
-                                });
+                                }
                             }
                         }
                     });
