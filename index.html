@@ -139,6 +139,50 @@
             font-weight: bold;
             -ms-flex-negative: 0;
             flex-shrink: 0;
+            border: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .player-position.oya {
+            background: #FF5722;
+            box-shadow: 0 0 8px rgba(255, 87, 34, 0.6);
+        }
+
+        .player-position-select {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-oya {
+            background: #9E9E9E;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-oya.active {
+            background: #FF5722;
+            box-shadow: 0 0 8px rgba(255, 87, 34, 0.6);
         }
 
         /* トグルボタン行 */
@@ -856,12 +900,26 @@
                 reach: 0,
                 agari: 0,
                 houjuu: 0,
+                isOya: index === 0,  // 東家が初期親
                 agariDetails: [],
                 totalPoints: 0,
                 tsumoCount: 0,
                 ronCount: 0,
-                totalHoujuu: 0   // 累積放銃回数
+                totalHoujuu: 0
             }));
+            renderPlayers();
+        }
+        
+        // 親を切り替え
+        function toggleOya(playerId) {
+            players.forEach(p => p.isOya = false);
+            players[playerId].isOya = true;
+            renderPlayers();
+        }
+        
+        // 家を変更
+        function changePosition(playerId, newPosition) {
+            players[playerId].position = newPosition;
             renderPlayers();
         }
         
@@ -877,7 +935,15 @@
                 card.innerHTML = `
                     <div class="player-header">
                         <div class="player-name" onclick="editPlayerName(${player.id})" id="playerName${player.id}">${player.name}</div>
-                        <div class="player-position">${player.position}</div>
+                        <select class="player-position-select" onchange="changePosition(${player.id}, this.value)">
+                            <option value="東家" ${player.position === '東家' ? 'selected' : ''}>東家</option>
+                            <option value="南家" ${player.position === '南家' ? 'selected' : ''}>南家</option>
+                            <option value="西家" ${player.position === '西家' ? 'selected' : ''}>西家</option>
+                            <option value="北家" ${player.position === '北家' ? 'selected' : ''}>北家</option>
+                        </select>
+                        <button class="btn-oya ${player.isOya ? 'active' : ''}" onclick="toggleOya(${player.id})">
+                            親
+                        </button>
                     </div>
 
                     <div class="toggle-grid">
@@ -1174,6 +1240,7 @@
                     id: p.id,
                     name: p.name,
                     position: p.position,
+                    isOya: p.isOya,
                     furo: p.furo,
                     reach: p.reach,
                     agari: p.agari,
@@ -1191,11 +1258,28 @@
             
             // 本場数・局の自動更新
             if (isRyukyoku) {
+                // 流局 → 本場を増やす、局は進めない
                 honba++;
             } else {
-                honba = 0;
-                kyoku = Math.min(kyokuLabels.length - 1, kyoku + 1);
-                document.getElementById('kyokuLabel').textContent = kyokuLabels[kyoku];
+                // 和了あり → 親が和了したか確認
+                const oyaAgari = players.find(p => p.isOya && p.agari > 0);
+                if (oyaAgari) {
+                    // 親和了 → 連荘（本場+1、局は進めない）
+                    honba++;
+                } else {
+                    // 子和了 → 局進行（本場リセット、局を進める、親を次に移す）
+                    honba = 0;
+                    kyoku = (kyoku + 1) % kyokuLabels.length;
+                    document.getElementById('kyokuLabel').textContent = kyokuLabels[kyoku];
+                    
+                    // 親を次のプレイヤーに移動（東→南→西→北→東...）
+                    const currentOyaIndex = players.findIndex(p => p.isOya);
+                    if (currentOyaIndex !== -1) {
+                        players.forEach(p => p.isOya = false);
+                        const nextOyaIndex = (currentOyaIndex + 1) % players.length;
+                        players[nextOyaIndex].isOya = true;
+                    }
+                }
             }
             document.getElementById('honbaCount').textContent = honba;
             
@@ -1396,9 +1480,10 @@
                                     const detail = p.agariDetails && p.agariDetails[0];
                                     const ippatsuBadge = detail && detail.ippatsu ? ' <span style="color:#E65100;font-weight:bold;">⚡一発</span>' : '';
                                     const agariDetail = detail ? ` (${detail.type === 'tsumo' ? 'ツモ' : 'ロン'}${detail.from ? '←' + detail.from : ''}${ippatsuBadge})` : '';
+                                    const oyaBadge = p.isOya ? ' <span style="background:#FF5722;color:white;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:4px;">親</span>' : '';
                                     return `
                                     <div class="history-player">
-                                        <div class="history-player-name">${p.name}</div>
+                                        <div class="history-player-name">${p.name}${oyaBadge}</div>
                                         <div class="history-stats">
                                             副露: ${p.furo} | リーチ: ${p.reach}<br>
                                             和了: ${p.agari}${agariDetail}<br>
