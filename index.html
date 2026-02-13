@@ -477,6 +477,25 @@
             -webkit-appearance: none; appearance: none;
         }
 
+        .btn-export-csv {
+            background: #009688; color: white;
+            padding: 10px 20px; font-size: 14px;
+            border: none; border-radius: 6px;
+            cursor: pointer; margin-top: 10px;
+            -webkit-appearance: none; appearance: none;
+        }
+
+        .history-bottom-buttons {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            -webkit-box-pack: end;
+            -ms-flex-pack: end;
+            justify-content: flex-end;
+        }
+
         .no-history { text-align: center; color: #999; padding: 40px; font-size: 15px; }
 
         /* PCでも見やすく */
@@ -555,7 +574,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">得点（点）</label>
-                    <input type="number" id="agariPoints" class="form-input" placeholder="例: 8000" required min="0" step="100">
+                    <input type="number" id="agariPoints" class="form-input" placeholder="例: 8000" required min="0" step="100" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 
                 <button type="submit" class="btn-submit">✓ 記録する</button>
@@ -570,20 +589,29 @@
         let players = [];
         let currentAgariPlayer = null;
         
+        // 名前をLocalStorageに保存
+        function savePlayerNames() {
+            const names = players.map(p => p.name);
+            localStorage.setItem('mahjongPlayerNames', JSON.stringify(names));
+        }
+        
         // 初期化
         function initPlayers() {
+            // 前回の名前を読み込む
+            const savedNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || 'null');
+            
             players = positions.map((pos, index) => ({
                 id: index,
                 position: pos,
-                name: pos,
-                furo: 0,      // 副露
-                reach: 0,     // リーチ
-                agari: 0,     // 和了回数
-                houjuu: 0,    // 放銃回数
-                agariDetails: [], // 和了の詳細記録
-                totalPoints: 0,   // 獲得点数合計
-                tsumoCount: 0,    // ツモ回数
-                ronCount: 0       // ロン回数
+                name: savedNames ? savedNames[index] : pos,
+                furo: 0,
+                reach: 0,
+                agari: 0,
+                houjuu: 0,
+                agariDetails: [],
+                totalPoints: 0,
+                tsumoCount: 0,
+                ronCount: 0
             }));
             renderPlayers();
         }
@@ -659,6 +687,7 @@
             input.onblur = function() {
                 const newName = input.value.trim() || player.position;
                 player.name = newName;
+                savePlayerNames();
                 renderPlayers();
             };
             
@@ -1107,7 +1136,12 @@
                     `;
                 });
                 
-                html += '<button class="btn-clear-all" onclick="clearAllHistory()">🗑️ 全履歴を削除</button>';
+                html += `
+                    <div class="history-bottom-buttons">
+                        <button class="btn-export-csv" onclick="exportCSV()">📥 CSVエクスポート</button>
+                        <button class="btn-clear-all" onclick="clearAllHistory()">🗑️ 全履歴を削除</button>
+                    </div>
+                `;
                 content.innerHTML = html;
             }
             
@@ -1133,8 +1167,55 @@
         function clearAllHistory() {
             if (confirm('本当に全ての記録を削除しますか？この操作は取り消せません。')) {
                 localStorage.removeItem('mahjongGames');
-                showHistory(); // 再表示
+                showHistory();
             }
+        }
+        
+        // CSVエクスポート
+        function exportCSV() {
+            const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
+            if (savedGames.length === 0) {
+                alert('エクスポートするデータがありません。');
+                return;
+            }
+            
+            // ヘッダー行
+            const headers = ['日時', '流局', 'プレイヤー', '家', '副露', 'リーチ', '和了', '和了方法', '得点', '放銃', '放銃相手'];
+            const rows = [headers];
+            
+            savedGames.forEach(game => {
+                game.players.forEach(p => {
+                    const detail = p.agariDetails && p.agariDetails[0];
+                    rows.push([
+                        game.timestamp,
+                        game.isRyukyoku ? '流局' : '',
+                        p.name,
+                        p.position,
+                        p.furo > 0 ? '○' : '',
+                        p.reach > 0 ? '○' : '',
+                        p.agari > 0 ? '○' : '',
+                        detail ? (detail.type === 'tsumo' ? 'ツモ' : 'ロン') : '',
+                        detail ? detail.points : '',
+                        p.houjuu > 0 ? '○' : '',
+                        detail && detail.type === 'ron' && detail.from ? detail.from : ''
+                    ]);
+                });
+            });
+            
+            // BOM付きUTF-8でCSV生成（Excelで文字化けしないように）
+            const csvContent = '\uFEFF' + rows.map(row => 
+                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `mahjong_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '')}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
         
         // モーダルの外側をクリックで閉じる
