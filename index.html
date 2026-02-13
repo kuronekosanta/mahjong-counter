@@ -518,8 +518,8 @@
     </div>
 
     <div class="control-panel">
-        <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
         <button class="btn-history" onclick="showHistory()">📊 記録を確認</button>
+        <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
     </div>
     
     <!-- 履歴表示モーダル -->
@@ -972,6 +972,7 @@
                 allPlayerNames.forEach(name => {
                     playerStats[name] = {
                         gamesPlayed: 0, furoGames: 0, reachGames: 0,
+                        houjuuGames: 0,
                         totalAgari: 0, tsumoCount: 0, ronCount: 0,
                         totalPoints: 0, ronFrom: {}
                     };
@@ -984,6 +985,7 @@
                         st.gamesPlayed++;
                         if (p.furo > 0) st.furoGames++;
                         if (p.reach > 0) st.reachGames++;
+                        if (p.houjuu > 0) st.houjuuGames++;
                         if (p.agari > 0) {
                             st.totalAgari++;
                             const detail = p.agariDetails && p.agariDetails[0];
@@ -1021,12 +1023,12 @@
                     </div>
                 `;
                 
-                // プレイヤーごとの統計を表示
                 Object.keys(playerStats).forEach(playerName => {
                     const stats = playerStats[playerName];
                     const tsumoRate = stats.totalAgari > 0 ? ((stats.tsumoCount / stats.totalAgari) * 100).toFixed(1) : 0;
                     const furoRate = stats.gamesPlayed > 0 ? ((stats.furoGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const agariRate = stats.gamesPlayed > 0 ? ((stats.totalAgari / stats.gamesPlayed) * 100).toFixed(1) : 0;
+                    const houjuuRate = stats.gamesPlayed > 0 ? ((stats.houjuuGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const avgPoints = stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0;
                     
                     html += `
@@ -1035,38 +1037,38 @@
                                 👤 ${playerName}
                             </div>
                             
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                                <div style="background: white; padding: 12px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 13px;">参加ゲーム数</div>
-                                    <div style="font-size: 24px; font-weight: bold; color: #333;">${stats.gamesPlayed}局</div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">参加ゲーム数</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #333;">${stats.gamesPlayed}局</div>
                                 </div>
-                                
-                                <div style="background: white; padding: 12px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 13px;">和了率</div>
-                                    <div style="font-size: 24px; font-weight: bold; color: #E91E63;">${agariRate}%</div>
-                                    <div style="font-size: 12px; color: #999;">${stats.totalAgari}/${stats.gamesPlayed}局</div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">和了率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #E91E63;">${agariRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.totalAgari}/${stats.gamesPlayed}局</div>
                                 </div>
-                                
-                                <div style="background: white; padding: 12px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 13px;">副露率</div>
-                                    <div style="font-size: 24px; font-weight: bold; color: #FF9800;">${furoRate}%</div>
-                                    <div style="font-size: 12px; color: #999;">${stats.furoGames}/${stats.gamesPlayed}局</div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">放銃率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #f44336;">${houjuuRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.houjuuGames}/${stats.gamesPlayed}局</div>
                                 </div>
-                                
-                                <div style="background: white; padding: 12px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 13px;">ツモ率</div>
-                                    <div style="font-size: 24px; font-weight: bold; color: #4CAF50;">${tsumoRate}%</div>
-                                    <div style="font-size: 12px; color: #999;">${stats.tsumoCount}/${stats.totalAgari}回</div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">副露率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #FF9800;">${furoRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.furoGames}/${stats.gamesPlayed}局</div>
                                 </div>
-                                
-                                <div style="background: white; padding: 12px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 13px;">総得点</div>
-                                    <div style="font-size: 24px; font-weight: bold; color: #2196F3;">${stats.totalPoints.toLocaleString()}点</div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">ツモ率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #4CAF50;">${tsumoRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.tsumoCount}/${stats.totalAgari}回</div>
                                 </div>
-                                
-                                <div style="background: white; padding: 12px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 13px;">平均得点</div>
-                                    <div style="font-size: 24px; font-weight: bold; color: #9C27B0;">${avgPoints.toLocaleString()}点</div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">総得点</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #2196F3;">${stats.totalPoints.toLocaleString()}点</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">平均得点</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #9C27B0;">${avgPoints.toLocaleString()}点</div>
                                 </div>
                             </div>
                     `;
