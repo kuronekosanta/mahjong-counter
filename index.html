@@ -1350,7 +1350,13 @@
             const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
             
             if (savedGames.length === 0) {
-                content.innerHTML = '<div class="no-history">まだ記録がありません</div>';
+                content.innerHTML = `
+                    <div class="no-history">まだ記録がありません</div>
+                    <div class="history-bottom-buttons">
+                        <button class="btn-export-csv" onclick="document.getElementById('csvFileInput').click()">📤 CSVインポート</button>
+                    </div>
+                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importCSV(event)">
+                `;
             } else {
                 // プレイヤーごとの統計を集計
                 const playerStats = {};
@@ -1420,6 +1426,7 @@
                     const furoRate = stats.gamesPlayed > 0 ? ((stats.furoGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const agariRate = stats.gamesPlayed > 0 ? ((stats.totalAgari / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const houjuuRate = stats.gamesPlayed > 0 ? ((stats.houjuuGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
+                    const reachRate = stats.gamesPlayed > 0 ? ((stats.reachGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const ippatsuRate = stats.totalAgari > 0 ? ((stats.ippatsuCount / stats.totalAgari) * 100).toFixed(1) : 0;
                     const avgPoints = stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0;
                     const avgDora = stats.totalAgari > 0 ? (stats.totalDora / stats.totalAgari).toFixed(2) : 0;
@@ -1436,9 +1443,22 @@
                                     <div style="font-size: 22px; font-weight: bold; color: #333;">${stats.gamesPlayed}局</div>
                                 </div>
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">平均得点</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #9C27B0;">${avgPoints.toLocaleString()}点</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">総得点</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #2196F3;">${stats.totalPoints.toLocaleString()}点</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
                                     <div style="color: #666; font-size: 12px;">和了率</div>
                                     <div style="font-size: 22px; font-weight: bold; color: #E91E63;">${agariRate}%</div>
                                     <div style="font-size: 11px; color: #999;">${stats.totalAgari}/${stats.gamesPlayed}局</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">ツモ率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #4CAF50;">${tsumoRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.tsumoCount}/${stats.totalAgari}回</div>
                                 </div>
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
                                     <div style="color: #666; font-size: 12px;">放銃率</div>
@@ -1451,22 +1471,9 @@
                                     <div style="font-size: 11px; color: #999;">${stats.furoGames}/${stats.gamesPlayed}局</div>
                                 </div>
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 12px;">ツモ率</div>
-                                    <div style="font-size: 22px; font-weight: bold; color: #4CAF50;">${tsumoRate}%</div>
-                                    <div style="font-size: 11px; color: #999;">${stats.tsumoCount}/${stats.totalAgari}回</div>
-                                </div>
-                                <div style="background: white; padding: 10px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 12px;">一発率</div>
-                                    <div style="font-size: 22px; font-weight: bold; color: #FF9800;">⚡${ippatsuRate}%</div>
-                                    <div style="font-size: 11px; color: #999;">${stats.ippatsuCount}/${stats.totalAgari}回</div>
-                                </div>
-                                <div style="background: white; padding: 10px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 12px;">総得点</div>
-                                    <div style="font-size: 22px; font-weight: bold; color: #2196F3;">${stats.totalPoints.toLocaleString()}点</div>
-                                </div>
-                                <div style="background: white; padding: 10px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 12px;">平均得点</div>
-                                    <div style="font-size: 22px; font-weight: bold; color: #9C27B0;">${avgPoints.toLocaleString()}点</div>
+                                    <div style="color: #666; font-size: 12px;">リーチ率</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #1976D2;">${reachRate}%</div>
+                                    <div style="font-size: 11px; color: #999;">${stats.reachGames}/${stats.gamesPlayed}局</div>
                                 </div>
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
                                     <div style="color: #666; font-size: 12px;">🀄 平均ドラ</div>
