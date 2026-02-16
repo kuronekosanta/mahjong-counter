@@ -790,6 +790,19 @@
         </div>
     </div>
     
+    <!-- ランキング画面 -->
+    <div id="rankingScreen" style="display: none;">
+        <div class="header">
+            <h1>🏆 ランキング</h1>
+        </div>
+        <div class="history-content" id="rankingContent" style="overflow-x: auto;">
+            <!-- ランキングがここに表示される -->
+        </div>
+        <div class="control-panel">
+            <button class="btn-back" onclick="showHistoryScreen()">← 履歴画面に戻る</button>
+        </div>
+    </div>
+    
     <!-- 和了記録モーダル -->
     <div id="agariModal" class="agari-modal">
         <div class="agari-modal-content">
@@ -1336,12 +1349,217 @@
         function showInputScreen() {
             document.getElementById('inputScreen').style.display = 'flex';
             document.getElementById('historyScreen').style.display = 'none';
+            document.getElementById('rankingScreen').style.display = 'none';
         }
 
         function showHistoryScreen() {
             document.getElementById('inputScreen').style.display = 'none';
             document.getElementById('historyScreen').style.display = 'flex';
+            document.getElementById('rankingScreen').style.display = 'none';
             loadHistory();
+        }
+        
+        function showRankingScreen() {
+            document.getElementById('inputScreen').style.display = 'none';
+            document.getElementById('historyScreen').style.display = 'none';
+            document.getElementById('rankingScreen').style.display = 'flex';
+            loadRanking();
+        }
+
+        // ランキング表示
+        function loadRanking() {
+            const content = document.getElementById('rankingContent');
+            const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
+            
+            if (savedGames.length === 0) {
+                content.innerHTML = '<div class="no-history">まだ記録がありません</div>';
+                return;
+            }
+            
+            // プレイヤーごとの統計を集計
+            const playerStats = {};
+            const allPlayerNames = new Set();
+            savedGames.forEach(game => game.players.forEach(p => allPlayerNames.add(p.name)));
+            allPlayerNames.forEach(name => {
+                playerStats[name] = {
+                    gamesPlayed: 0,
+                    totalAgari: 0,
+                    tsumoCount: 0,
+                    totalPoints: 0,
+                    houjuuGames: 0,
+                    furoGames: 0,
+                    reachGames: 0,
+                    totalDora: 0,
+                    totalUraDora: 0
+                };
+            });
+            
+            savedGames.forEach(game => {
+                game.players.forEach(p => {
+                    if (!playerStats[p.name]) return;
+                    const st = playerStats[p.name];
+                    st.gamesPlayed++;
+                    if (p.houjuu > 0) st.houjuuGames++;
+                    if (p.furo > 0) st.furoGames++;
+                    if (p.reach > 0) st.reachGames++;
+                    if (p.agari > 0) {
+                        st.totalAgari++;
+                        const detail = p.agariDetails && p.agariDetails[0];
+                        if (detail) {
+                            st.totalPoints += detail.points;
+                            if (detail.type === 'tsumo') st.tsumoCount++;
+                            if (detail.dora) st.totalDora += detail.dora;
+                            if (detail.uraDora) st.totalUraDora += detail.uraDora;
+                        }
+                    }
+                });
+            });
+            
+            // ランキングデータを作成
+            const rankings = Object.keys(playerStats).map(name => {
+                const stats = playerStats[name];
+                return {
+                    name: name,
+                    gamesPlayed: stats.gamesPlayed,
+                    avgPoints: stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0,
+                    totalPoints: stats.totalPoints,
+                    agariRate: stats.gamesPlayed > 0 ? ((stats.totalAgari / stats.gamesPlayed) * 100).toFixed(1) : 0,
+                    tsumoRate: stats.totalAgari > 0 ? ((stats.tsumoCount / stats.totalAgari) * 100).toFixed(1) : 0,
+                    houjuuRate: stats.gamesPlayed > 0 ? ((stats.houjuuGames / stats.gamesPlayed) * 100).toFixed(1) : 0,
+                    furoRate: stats.gamesPlayed > 0 ? ((stats.furoGames / stats.gamesPlayed) * 100).toFixed(1) : 0,
+                    reachRate: stats.gamesPlayed > 0 ? ((stats.reachGames / stats.gamesPlayed) * 100).toFixed(1) : 0,
+                    avgDora: stats.totalAgari > 0 ? (stats.totalDora / stats.totalAgari).toFixed(2) : 0,
+                    avgUraDora: stats.totalAgari > 0 ? (stats.totalUraDora / stats.totalAgari).toFixed(2) : 0
+                };
+            });
+            
+            // テーブルスタイルを追加
+            let html = `
+                <style>
+                    .ranking-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        font-size: 14px;
+                    }
+                    .ranking-table th {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 12px 6px;
+                        text-align: center;
+                        font-weight: bold;
+                        position: sticky;
+                        top: 0;
+                        z-index: 10;
+                        font-size: 12px;
+                    }
+                    .ranking-table td {
+                        padding: 10px 6px;
+                        text-align: center;
+                        border-bottom: 1px solid #e0e0e0;
+                    }
+                    .ranking-table tr:hover {
+                        background: #f5f5f5;
+                    }
+                    .player-name-col {
+                        font-weight: bold;
+                        color: #333;
+                        text-align: left;
+                        padding-left: 12px;
+                    }
+                    .best-value {
+                        background: #e3f2fd;
+                        font-weight: bold;
+                        color: #1565c0;
+                    }
+                    .worst-value {
+                        background: #ffebee;
+                        font-weight: bold;
+                        color: #c62828;
+                    }
+                    @media (max-width: 768px) {
+                        .ranking-table {
+                            font-size: 11px;
+                        }
+                        .ranking-table th, .ranking-table td {
+                            padding: 8px 3px;
+                        }
+                    }
+                </style>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+                    <h2 style="margin: 0 0 10px 0; font-size: 20px;">🏆 プレイヤーランキング</h2>
+                    <p style="margin: 0; font-size: 14px; opacity: 0.9;">優秀な数値は青色、劣っている数値は赤色で表示されます</p>
+                </div>
+                
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 80px;">プレイヤー</th>
+                                <th style="min-width: 60px;">参加局数</th>
+                                <th style="min-width: 70px;">平均得点</th>
+                                <th style="min-width: 70px;">総得点</th>
+                                <th style="min-width: 65px;">和了率</th>
+                                <th style="min-width: 65px;">ツモ率</th>
+                                <th style="min-width: 65px;">放銃率</th>
+                                <th style="min-width: 65px;">副露率</th>
+                                <th style="min-width: 70px;">リーチ率</th>
+                                <th style="min-width: 75px;">平均ドラ</th>
+                                <th style="min-width: 85px;">平均裏ドラ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // 各カテゴリの最高・最低値を計算
+            const maxAvgPoints = Math.max(...rankings.map(r => r.avgPoints));
+            const minAvgPoints = Math.min(...rankings.map(r => r.avgPoints));
+            const maxTotalPoints = Math.max(...rankings.map(r => r.totalPoints));
+            const minTotalPoints = Math.min(...rankings.map(r => r.totalPoints));
+            const maxAgariRate = Math.max(...rankings.map(r => parseFloat(r.agariRate)));
+            const minAgariRate = Math.min(...rankings.map(r => parseFloat(r.agariRate)));
+            const maxTsumoRate = Math.max(...rankings.map(r => parseFloat(r.tsumoRate)));
+            const minTsumoRate = Math.min(...rankings.map(r => parseFloat(r.tsumoRate)));
+            const maxHoujuuRate = Math.max(...rankings.map(r => parseFloat(r.houjuuRate)));
+            const minHoujuuRate = Math.min(...rankings.map(r => parseFloat(r.houjuuRate)));
+            const maxAvgDora = Math.max(...rankings.map(r => parseFloat(r.avgDora)));
+            const minAvgDora = Math.min(...rankings.map(r => parseFloat(r.avgDora)));
+            const maxAvgUraDora = Math.max(...rankings.map(r => parseFloat(r.avgUraDora)));
+            const minAvgUraDora = Math.min(...rankings.map(r => parseFloat(r.avgUraDora)));
+            
+            rankings.forEach((player, index) => {
+                html += `
+                    <tr>
+                        <td class="player-name-col">${player.name}</td>
+                        <td>${player.gamesPlayed}局</td>
+                        <td class="${player.avgPoints === maxAvgPoints && maxAvgPoints > 0 ? 'best-value' : ''} ${player.avgPoints === minAvgPoints && rankings.length > 1 && minAvgPoints >= 0 ? 'worst-value' : ''}">${player.avgPoints.toLocaleString()}点</td>
+                        <td class="${player.totalPoints === maxTotalPoints && maxTotalPoints > 0 ? 'best-value' : ''} ${player.totalPoints === minTotalPoints && rankings.length > 1 ? 'worst-value' : ''}">${player.totalPoints.toLocaleString()}点</td>
+                        <td class="${parseFloat(player.agariRate) === maxAgariRate && maxAgariRate > 0 ? 'best-value' : ''} ${parseFloat(player.agariRate) === minAgariRate && rankings.length > 1 ? 'worst-value' : ''}">${player.agariRate}%</td>
+                        <td class="${parseFloat(player.tsumoRate) === maxTsumoRate && maxTsumoRate > 0 ? 'best-value' : ''} ${parseFloat(player.tsumoRate) === minTsumoRate && rankings.length > 1 ? 'worst-value' : ''}">${player.tsumoRate}%</td>
+                        <td class="${parseFloat(player.houjuuRate) === minHoujuuRate && rankings.length > 1 ? 'best-value' : ''} ${parseFloat(player.houjuuRate) === maxHoujuuRate && rankings.length > 1 ? 'worst-value' : ''}">${player.houjuuRate}%</td>
+                        <td>${player.furoRate}%</td>
+                        <td>${player.reachRate}%</td>
+                        <td class="${parseFloat(player.avgDora) === maxAvgDora && maxAvgDora > 0 ? 'best-value' : ''} ${parseFloat(player.avgDora) === minAvgDora && rankings.length > 1 && minAvgDora >= 0 ? 'worst-value' : ''}">${player.avgDora}枚</td>
+                        <td class="${parseFloat(player.avgUraDora) === maxAvgUraDora && maxAvgUraDora > 0 ? 'best-value' : ''} ${parseFloat(player.avgUraDora) === minAvgUraDora && rankings.length > 1 && minAvgUraDora >= 0 ? 'worst-value' : ''}">${player.avgUraDora}枚</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; font-size: 13px; color: #1565c0;">
+                    <strong>💡 ヒント:</strong> 横画面表示で見やすくなります
+                </div>
+            `;
+            
+            content.innerHTML = html;
         }
 
         // 履歴表示
@@ -1407,7 +1625,10 @@
                 
                 let html = `
                     <div style="margin-bottom: 30px; padding: 20px; background: #e8f5e9; border-radius: 8px;">
-                        <h3 style="margin: 0 0 10px 0; color: #2e7d32;">📊 総合統計</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0; color: #2e7d32;">📊 総合統計</h3>
+                            <button onclick="showRankingScreen()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏆 ランキング</button>
+                        </div>
                         <div style="display: flex; gap: 30px; flex-wrap: wrap;">
                             <div style="font-size: 16px; color: #333;">
                                 <strong>記録されたゲーム数: ${savedGames.length}局</strong>
