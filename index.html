@@ -836,6 +836,40 @@
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label">ドラ</label>
+                    <select id="doraCount" class="select-input">
+                        <option value="0">0枚</option>
+                        <option value="1">1枚</option>
+                        <option value="2">2枚</option>
+                        <option value="3">3枚</option>
+                        <option value="4">4枚</option>
+                        <option value="5">5枚</option>
+                        <option value="6">6枚</option>
+                        <option value="7">7枚</option>
+                        <option value="8">8枚</option>
+                        <option value="9">9枚</option>
+                        <option value="10">10枚</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">裏ドラ</label>
+                    <select id="uraDoraCount" class="select-input">
+                        <option value="0">0枚</option>
+                        <option value="1">1枚</option>
+                        <option value="2">2枚</option>
+                        <option value="3">3枚</option>
+                        <option value="4">4枚</option>
+                        <option value="5">5枚</option>
+                        <option value="6">6枚</option>
+                        <option value="7">7枚</option>
+                        <option value="8">8枚</option>
+                        <option value="9">9枚</option>
+                        <option value="10">10枚</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">得点（点）</label>
                     <input type="number" id="agariPoints" class="form-input" placeholder="例: 8000" required min="0" step="100" inputmode="numeric" pattern="[0-9]*">
                 </div>
@@ -1082,6 +1116,8 @@
                 const points = parseInt(document.getElementById('agariPoints').value);
                 const ronFromId = agariType === 'ron' ? parseInt(document.getElementById('ronFrom').value) : null;
                 const isIppatsu = document.getElementById('ippatsuCheck').checked;
+                const doraCount = parseInt(document.getElementById('doraCount').value);
+                const uraDoraCount = parseInt(document.getElementById('uraDoraCount').value);
                 
                 const player = players[agariPlayerId];
                 player.agari = 1;
@@ -1101,6 +1137,8 @@
                     points: points,
                     from: ronFromId !== null ? players[ronFromId].name : null,
                     ippatsu: isIppatsu,
+                    dora: doraCount,
+                    uraDora: uraDoraCount,
                     timestamp: new Date().toLocaleString('ja-JP')
                 });
                 
@@ -1323,7 +1361,8 @@
                         gamesPlayed: 0, furoGames: 0, reachGames: 0,
                         houjuuGames: 0, ippatsuCount: 0,
                         totalAgari: 0, tsumoCount: 0, ronCount: 0,
-                        totalPoints: 0, ronFrom: {}
+                        totalPoints: 0, ronFrom: {},
+                        totalDora: 0, totalUraDora: 0
                     };
                 });
                 
@@ -1341,6 +1380,8 @@
                             if (detail) {
                                 st.totalPoints += detail.points;
                                 if (detail.ippatsu) st.ippatsuCount++;
+                                if (detail.dora) st.totalDora += detail.dora;
+                                if (detail.uraDora) st.totalUraDora += detail.uraDora;
                                 if (detail.type === 'tsumo') {
                                     st.tsumoCount++;
                                 } else {
@@ -1381,6 +1422,8 @@
                     const houjuuRate = stats.gamesPlayed > 0 ? ((stats.houjuuGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const ippatsuRate = stats.totalAgari > 0 ? ((stats.ippatsuCount / stats.totalAgari) * 100).toFixed(1) : 0;
                     const avgPoints = stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0;
+                    const avgDora = stats.totalAgari > 0 ? (stats.totalDora / stats.totalAgari).toFixed(2) : 0;
+                    const avgUraDora = stats.totalAgari > 0 ? (stats.totalUraDora / stats.totalAgari).toFixed(2) : 0;
                     
                     html += `
                         <div class="history-item" style="margin-bottom: 20px;">
@@ -1424,6 +1467,16 @@
                                 <div style="background: white; padding: 10px; border-radius: 6px;">
                                     <div style="color: #666; font-size: 12px;">平均得点</div>
                                     <div style="font-size: 22px; font-weight: bold; color: #9C27B0;">${avgPoints.toLocaleString()}点</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">🀄 平均ドラ</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #FF6F00;">${avgDora}枚</div>
+                                    <div style="font-size: 11px; color: #999;">合計${stats.totalDora}枚</div>
+                                </div>
+                                <div style="background: white; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 12px;">🎴 平均裏ドラ</div>
+                                    <div style="font-size: 22px; font-weight: bold; color: #7B1FA2;">${avgUraDora}枚</div>
+                                    <div style="font-size: 11px; color: #999;">合計${stats.totalUraDora}枚</div>
                                 </div>
                             </div>
                     `;
@@ -1479,7 +1532,10 @@
                                 ${game.players.map(p => {
                                     const detail = p.agariDetails && p.agariDetails[0];
                                     const ippatsuBadge = detail && detail.ippatsu ? ' <span style="color:#E65100;font-weight:bold;">⚡一発</span>' : '';
-                                    const agariDetail = detail ? ` (${detail.type === 'tsumo' ? 'ツモ' : 'ロン'}${detail.from ? '←' + detail.from : ''}${ippatsuBadge})` : '';
+                                    const doraBadge = detail && (detail.dora > 0 || detail.uraDora > 0) 
+                                        ? ` <span style="color:#2196F3;font-weight:bold;">🀄${detail.dora || 0}${detail.uraDora > 0 ? '+裏' + detail.uraDora : ''}</span>` 
+                                        : '';
+                                    const agariDetail = detail ? ` (${detail.type === 'tsumo' ? 'ツモ' : 'ロン'}${detail.from ? '←' + detail.from : ''}${ippatsuBadge}${doraBadge})` : '';
                                     const oyaBadge = p.isOya ? ' <span style="background:#FF5722;color:white;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:4px;">親</span>' : '';
                                     return `
                                     <div class="history-player">
@@ -1502,9 +1558,11 @@
                 
                 html += `
                     <div class="history-bottom-buttons">
+                        <button class="btn-export-csv" onclick="document.getElementById('csvFileInput').click()">📤 CSVインポート</button>
                         <button class="btn-export-csv" onclick="exportCSV()">📥 CSVエクスポート</button>
                         <button class="btn-clear-all" onclick="clearAllHistory()">🗑️ 全履歴を削除</button>
                     </div>
+                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importCSV(event)">
                 `;
                 content.innerHTML = html;
             }
@@ -1537,7 +1595,7 @@
             }
             
             // ヘッダー行
-            const headers = ['日時', '流局', 'プレイヤー', '家', '副露', 'リーチ', '和了', '和了方法', '得点', '放銃', '放銃相手'];
+            const headers = ['日時', '流局', 'プレイヤー', '家', '副露', 'リーチ', '和了', '和了方法', '一発', 'ドラ', '裏ドラ', '得点', '放銃', '放銃相手'];
             const rows = [headers];
             
             savedGames.forEach(game => {
@@ -1552,6 +1610,9 @@
                         p.reach > 0 ? '○' : '',
                         p.agari > 0 ? '○' : '',
                         detail ? (detail.type === 'tsumo' ? 'ツモ' : 'ロン') : '',
+                        detail && detail.ippatsu ? '○' : '',
+                        detail && detail.dora ? detail.dora : '',
+                        detail && detail.uraDora ? detail.uraDora : '',
                         detail ? detail.points : '',
                         p.houjuu > 0 ? '○' : '',
                         detail && detail.type === 'ron' && detail.from ? detail.from : ''
@@ -1573,6 +1634,120 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        }
+        
+        // CSVインポート
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    // BOMを削除
+                    const cleanText = text.replace(/^\uFEFF/, '');
+                    const lines = cleanText.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length < 2) {
+                        alert('CSVファイルが空です。');
+                        return;
+                    }
+                    
+                    // ヘッダー行をスキップ
+                    const dataLines = lines.slice(1);
+                    
+                    // 日時ごとにグループ化
+                    const gamesByTimestamp = {};
+                    dataLines.forEach(line => {
+                        // CSVパース（ダブルクォートで囲まれたフィールドに対応）
+                        const fields = [];
+                        let current = '';
+                        let inQuotes = false;
+                        
+                        for (let i = 0; i < line.length; i++) {
+                            const char = line[i];
+                            if (char === '"') {
+                                if (inQuotes && line[i + 1] === '"') {
+                                    current += '"';
+                                    i++;
+                                } else {
+                                    inQuotes = !inQuotes;
+                                }
+                            } else if (char === ',' && !inQuotes) {
+                                fields.push(current);
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        fields.push(current);
+                        
+                        if (fields.length < 14) return; // 不完全な行はスキップ
+                        
+                        const [timestamp, isRyukyoku, playerName, position, furo, reach, agari, agariType, ippatsu, dora, uraDora, points, houjuu, ronFrom] = fields;
+                        
+                        if (!gamesByTimestamp[timestamp]) {
+                            gamesByTimestamp[timestamp] = {
+                                timestamp: timestamp,
+                                isRyukyoku: isRyukyoku === '流局',
+                                kyoku: '',
+                                honba: 0,
+                                players: []
+                            };
+                        }
+                        
+                        const playerData = {
+                            name: playerName,
+                            position: position,
+                            furo: furo === '○' ? 1 : 0,
+                            reach: reach === '○' ? 1 : 0,
+                            agari: agari === '○' ? 1 : 0,
+                            houjuu: houjuu === '○' ? 1 : 0,
+                            totalPoints: points ? parseInt(points) : 0,
+                            agariDetails: [],
+                            isOya: false
+                        };
+                        
+                        // 和了詳細を追加
+                        if (agari === '○' && agariType) {
+                            playerData.agariDetails.push({
+                                type: agariType === 'ツモ' ? 'tsumo' : 'ron',
+                                points: points ? parseInt(points) : 0,
+                                from: ronFrom || null,
+                                ippatsu: ippatsu === '○',
+                                dora: dora ? parseInt(dora) : 0,
+                                uraDora: uraDora ? parseInt(uraDora) : 0,
+                                timestamp: timestamp
+                            });
+                        }
+                        
+                        gamesByTimestamp[timestamp].players.push(playerData);
+                    });
+                    
+                    // 既存の履歴を取得
+                    const savedGames = JSON.parse(localStorage.getItem('mahjongGames') || '[]');
+                    
+                    // 新しいゲームを追加
+                    const newGames = Object.values(gamesByTimestamp);
+                    const mergedGames = [...savedGames, ...newGames];
+                    
+                    // 保存
+                    localStorage.setItem('mahjongGames', JSON.stringify(mergedGames));
+                    
+                    alert(`${newGames.length}局のデータをインポートしました。`);
+                    loadHistory();
+                    
+                } catch (error) {
+                    console.error('CSV読み込みエラー:', error);
+                    alert('CSVファイルの読み込みに失敗しました。形式を確認してください。');
+                }
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+            
+            // ファイル選択をリセット（同じファイルを再度選択できるように）
+            event.target.value = '';
         }
         
         // モーダルの外側をクリックで閉じる（和了モーダルのみ）
