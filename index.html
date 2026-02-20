@@ -1315,18 +1315,10 @@
                     // 親和了 → 連荘（本場+1、局は進めない）
                     honba++;
                 } else {
-                    // 子和了 → 局進行（本場リセット、局を進める、親を次に移す）
+                    // 子和了 → 局進行（本場リセット、局を進める）
                     honba = 0;
                     kyoku = (kyoku + 1) % kyokuLabels.length;
                     document.getElementById('kyokuLabel').textContent = kyokuLabels[kyoku];
-                    
-                    // 親を次のプレイヤーに移動（東→南→西→北→東...）
-                    const currentOyaIndex = players.findIndex(p => p.isOya);
-                    if (currentOyaIndex !== -1) {
-                        players.forEach(p => p.isOya = false);
-                        const nextOyaIndex = (currentOyaIndex + 1) % players.length;
-                        players[nextOyaIndex].isOya = true;
-                    }
                 }
             }
             document.getElementById('honbaCount').textContent = honba;
