@@ -282,6 +282,7 @@
             display: -webkit-box;
             display: -ms-flexbox;
             display: flex;
+            flex-direction: column;
             gap: 6px;
             -ms-flex-negative: 0;
             flex-shrink: 0;
@@ -773,6 +774,7 @@
         </div>
 
         <div class="control-panel">
+            <button class="btn-save" onclick="openAgariModalCommon()" style="background: #E91E63;">🎉 和了</button>
             <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
         </div>
     </div>
@@ -810,7 +812,7 @@
             
             <form id="agariForm">
                 <div class="form-group">
-                    <label class="form-label">和了したプレイヤー</label>
+                    <label class="form-label">和了プレイヤー</label>
                     <select id="agariPlayer" class="select-input" required>
                         <!-- JavaScriptで動的生成 -->
                     </select>
@@ -843,40 +845,6 @@
                         <input type="checkbox" id="ippatsuCheck" onchange="updateIppatsuStyle()">
                         <span>⚡ 一発和了</span>
                     </label>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">ドラ</label>
-                    <select id="doraCount" class="select-input">
-                        <option value="0">0枚</option>
-                        <option value="1">1枚</option>
-                        <option value="2">2枚</option>
-                        <option value="3">3枚</option>
-                        <option value="4">4枚</option>
-                        <option value="5">5枚</option>
-                        <option value="6">6枚</option>
-                        <option value="7">7枚</option>
-                        <option value="8">8枚</option>
-                        <option value="9">9枚</option>
-                        <option value="10">10枚</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">裏ドラ</label>
-                    <select id="uraDoraCount" class="select-input">
-                        <option value="0">0枚</option>
-                        <option value="1">1枚</option>
-                        <option value="2">2枚</option>
-                        <option value="3">3枚</option>
-                        <option value="4">4枚</option>
-                        <option value="5">5枚</option>
-                        <option value="6">6枚</option>
-                        <option value="7">7枚</option>
-                        <option value="8">8枚</option>
-                        <option value="9">9枚</option>
-                        <option value="10">10枚</option>
-                    </select>
                 </div>
                 
                 <div class="form-group">
@@ -979,17 +947,20 @@
                 card.innerHTML = `
                     <div class="player-header">
                         <div class="player-name" onclick="editPlayerName(${player.id})" id="playerName${player.id}">${player.name}</div>
-                        <select class="player-position-select" onchange="changePosition(${player.id}, this.value)">
+                    </div>
+                    
+                    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                        <select class="player-position-select" onchange="changePosition(${player.id}, this.value)" style="flex: 1; height: 50px; padding: 0 4px; font-size: 13px; font-weight: bold; border: 2px solid #4CAF50; border-radius: 6px; background: white; color: #4CAF50; -webkit-appearance: none; appearance: none; text-align: center;">
                             <option value="東家" ${player.position === '東家' ? 'selected' : ''}>東家</option>
                             <option value="南家" ${player.position === '南家' ? 'selected' : ''}>南家</option>
                             <option value="西家" ${player.position === '西家' ? 'selected' : ''}>西家</option>
                             <option value="北家" ${player.position === '北家' ? 'selected' : ''}>北家</option>
                         </select>
-                        <button class="btn-oya ${player.isOya ? 'active' : ''}" onclick="toggleOya(${player.id})">
-                            親
+                        <button onclick="toggleOya(${player.id})" style="flex: 1; height: 50px; padding: 0; font-size: 14px; font-weight: bold; border: 2px solid ${player.isOya ? '#FF5722' : '#ddd'}; border-radius: 6px; background: ${player.isOya ? '#FF5722' : '#f8f8f8'}; color: ${player.isOya ? 'white' : '#aaa'}; ${player.isOya ? 'box-shadow: 0 0 8px rgba(255, 87, 34, 0.6);' : ''} cursor: pointer; -webkit-appearance: none; appearance: none;">
+                            ${player.isOya ? '✓ 親' : '親'}
                         </button>
                     </div>
-
+                    
                     <div class="toggle-grid">
                         <div class="toggle-item">
                             <span class="toggle-label">副露</span>
@@ -1001,12 +972,6 @@
                             <span class="toggle-label">リーチ</span>
                             <button class="btn-toggle ${player.reach > 0 ? 'active' : ''} ${reachDisabled ? 'disabled' : ''}" onclick="toggleReach(${player.id})">
                                 ${player.reach > 0 ? '✓ ON' : reachDisabled ? '—' : 'OFF'}
-                            </button>
-                        </div>
-                        <div class="toggle-item" style="width: 100%;">
-                            <span class="toggle-label">和了</span>
-                            <button class="btn-toggle ${player.agari > 0 ? 'active' : ''}" onclick="toggleAgari(${player.id})" style="width:100%;">
-                                ${player.agari > 0 ? '✓ ON' : 'OFF'}
                             </button>
                         </div>
                     </div>
@@ -1098,6 +1063,31 @@
                 .join('');
         }
         
+        // 共通和了モーダルを開く
+        function openAgariModalCommon() {
+            const modal = document.getElementById('agariModal');
+            const agariPlayerSelect = document.getElementById('agariPlayer');
+            const ronFromSelect = document.getElementById('ronFrom');
+            
+            // プレイヤー選択肢を生成
+            agariPlayerSelect.innerHTML = players.map(p => 
+                `<option value="${p.id}">${p.name}</option>`
+            ).join('');
+            
+            // ロン相手の選択肢を生成
+            updateRonFromOptions();
+            
+            // フォームリセット
+            document.getElementById('agariForm').reset();
+            document.getElementById('ronFromGroup').style.display = 'none';
+            document.getElementById('ippatsuLabel').classList.remove('checked');
+            
+            // ラジオボタンの初期selected状態
+            updateRadioStyles();
+            
+            modal.style.display = 'block';
+        }
+        
         // 和了モーダルを閉じる
         function closeAgariModal() {
             document.getElementById('agariModal').style.display = 'none';
@@ -1126,8 +1116,6 @@
                 const points = parseInt(document.getElementById('agariPoints').value);
                 const ronFromId = agariType === 'ron' ? parseInt(document.getElementById('ronFrom').value) : null;
                 const isIppatsu = document.getElementById('ippatsuCheck').checked;
-                const doraCount = parseInt(document.getElementById('doraCount').value);
-                const uraDoraCount = parseInt(document.getElementById('uraDoraCount').value);
                 
                 const player = players[agariPlayerId];
                 player.agari = 1;
@@ -1147,8 +1135,6 @@
                     points: points,
                     from: ronFromId !== null ? players[ronFromId].name : null,
                     ippatsu: isIppatsu,
-                    dora: doraCount,
-                    uraDora: uraDoraCount,
                     timestamp: new Date().toLocaleString('ja-JP')
                 });
                 
@@ -1315,10 +1301,18 @@
                     // 親和了 → 連荘（本場+1、局は進めない）
                     honba++;
                 } else {
-                    // 子和了 → 局進行（本場リセット、局を進める）
+                    // 子和了 → 局進行（本場リセット、局を進める、親を次に移す）
                     honba = 0;
                     kyoku = (kyoku + 1) % kyokuLabels.length;
                     document.getElementById('kyokuLabel').textContent = kyokuLabels[kyoku];
+                    
+                    // 親を次のプレイヤーに移動（東→南→西→北→東...）
+                    const currentOyaIndex = players.findIndex(p => p.isOya);
+                    if (currentOyaIndex !== -1) {
+                        players.forEach(p => p.isOya = false);
+                        const nextOyaIndex = (currentOyaIndex + 1) % players.length;
+                        players[nextOyaIndex].isOya = true;
+                    }
                 }
             }
             document.getElementById('honbaCount').textContent = honba;
@@ -1377,9 +1371,7 @@
                     totalPoints: 0,
                     houjuuGames: 0,
                     furoGames: 0,
-                    reachGames: 0,
-                    totalDora: 0,
-                    totalUraDora: 0
+                    reachGames: 0
                 };
             });
             
@@ -1397,8 +1389,6 @@
                         if (detail) {
                             st.totalPoints += detail.points;
                             if (detail.type === 'tsumo') st.tsumoCount++;
-                            if (detail.dora) st.totalDora += detail.dora;
-                            if (detail.uraDora) st.totalUraDora += detail.uraDora;
                         }
                     }
                 });
@@ -1416,9 +1406,7 @@
                     tsumoRate: stats.totalAgari > 0 ? ((stats.tsumoCount / stats.totalAgari) * 100).toFixed(1) : 0,
                     houjuuRate: stats.gamesPlayed > 0 ? ((stats.houjuuGames / stats.gamesPlayed) * 100).toFixed(1) : 0,
                     furoRate: stats.gamesPlayed > 0 ? ((stats.furoGames / stats.gamesPlayed) * 100).toFixed(1) : 0,
-                    reachRate: stats.gamesPlayed > 0 ? ((stats.reachGames / stats.gamesPlayed) * 100).toFixed(1) : 0,
-                    avgDora: stats.totalAgari > 0 ? (stats.totalDora / stats.totalAgari).toFixed(2) : 0,
-                    avgUraDora: stats.totalAgari > 0 ? (stats.totalUraDora / stats.totalAgari).toFixed(2) : 0
+                    reachRate: stats.gamesPlayed > 0 ? ((stats.reachGames / stats.gamesPlayed) * 100).toFixed(1) : 0
                 };
             });
             
@@ -1492,8 +1480,6 @@
                                 <th style="min-width: 65px;">放銃率</th>
                                 <th style="min-width: 65px;">副露率</th>
                                 <th style="min-width: 70px;">リーチ率</th>
-                                <th style="min-width: 75px;">平均ドラ</th>
-                                <th style="min-width: 85px;">平均裏ドラ</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1510,10 +1496,6 @@
             const minTsumoRate = Math.min(...rankings.map(r => parseFloat(r.tsumoRate)));
             const maxHoujuuRate = Math.max(...rankings.map(r => parseFloat(r.houjuuRate)));
             const minHoujuuRate = Math.min(...rankings.map(r => parseFloat(r.houjuuRate)));
-            const maxAvgDora = Math.max(...rankings.map(r => parseFloat(r.avgDora)));
-            const minAvgDora = Math.min(...rankings.map(r => parseFloat(r.avgDora)));
-            const maxAvgUraDora = Math.max(...rankings.map(r => parseFloat(r.avgUraDora)));
-            const minAvgUraDora = Math.min(...rankings.map(r => parseFloat(r.avgUraDora)));
             
             rankings.forEach((player, index) => {
                 html += `
@@ -1527,8 +1509,6 @@
                         <td class="${parseFloat(player.houjuuRate) === minHoujuuRate && rankings.length > 1 ? 'best-value' : ''} ${parseFloat(player.houjuuRate) === maxHoujuuRate && rankings.length > 1 ? 'worst-value' : ''}">${player.houjuuRate}%</td>
                         <td>${player.furoRate}%</td>
                         <td>${player.reachRate}%</td>
-                        <td class="${parseFloat(player.avgDora) === maxAvgDora && maxAvgDora > 0 ? 'best-value' : ''} ${parseFloat(player.avgDora) === minAvgDora && rankings.length > 1 && minAvgDora >= 0 ? 'worst-value' : ''}">${player.avgDora}枚</td>
-                        <td class="${parseFloat(player.avgUraDora) === maxAvgUraDora && maxAvgUraDora > 0 ? 'best-value' : ''} ${parseFloat(player.avgUraDora) === minAvgUraDora && rankings.length > 1 && minAvgUraDora >= 0 ? 'worst-value' : ''}">${player.avgUraDora}枚</td>
                     </tr>
                 `;
             });
@@ -1565,8 +1545,7 @@
                         gamesPlayed: 0, furoGames: 0, reachGames: 0,
                         houjuuGames: 0, ippatsuCount: 0,
                         totalAgari: 0, tsumoCount: 0, ronCount: 0,
-                        totalPoints: 0, ronFrom: {},
-                        totalDora: 0, totalUraDora: 0
+                        totalPoints: 0, ronFrom: {}
                     };
                 });
                 
@@ -1584,8 +1563,6 @@
                             if (detail) {
                                 st.totalPoints += detail.points;
                                 if (detail.ippatsu) st.ippatsuCount++;
-                                if (detail.dora) st.totalDora += detail.dora;
-                                if (detail.uraDora) st.totalUraDora += detail.uraDora;
                                 if (detail.type === 'tsumo') {
                                     st.tsumoCount++;
                                 } else {
@@ -1630,8 +1607,6 @@
                     const reachRate = stats.gamesPlayed > 0 ? ((stats.reachGames / stats.gamesPlayed) * 100).toFixed(1) : 0;
                     const ippatsuRate = stats.totalAgari > 0 ? ((stats.ippatsuCount / stats.totalAgari) * 100).toFixed(1) : 0;
                     const avgPoints = stats.totalAgari > 0 ? Math.round(stats.totalPoints / stats.totalAgari) : 0;
-                    const avgDora = stats.totalAgari > 0 ? (stats.totalDora / stats.totalAgari).toFixed(2) : 0;
-                    const avgUraDora = stats.totalAgari > 0 ? (stats.totalUraDora / stats.totalAgari).toFixed(2) : 0;
                     
                     html += `
                         <div class="history-item" style="margin-bottom: 20px;">
@@ -1675,16 +1650,6 @@
                                     <div style="color: #666; font-size: 12px;">リーチ率</div>
                                     <div style="font-size: 22px; font-weight: bold; color: #1976D2;">${reachRate}%</div>
                                     <div style="font-size: 11px; color: #999;">${stats.reachGames}/${stats.gamesPlayed}局</div>
-                                </div>
-                                <div style="background: white; padding: 10px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 12px;">🀄 平均ドラ</div>
-                                    <div style="font-size: 22px; font-weight: bold; color: #FF6F00;">${avgDora}枚</div>
-                                    <div style="font-size: 11px; color: #999;">合計${stats.totalDora}枚</div>
-                                </div>
-                                <div style="background: white; padding: 10px; border-radius: 6px;">
-                                    <div style="color: #666; font-size: 12px;">🎴 平均裏ドラ</div>
-                                    <div style="font-size: 22px; font-weight: bold; color: #7B1FA2;">${avgUraDora}枚</div>
-                                    <div style="font-size: 11px; color: #999;">合計${stats.totalUraDora}枚</div>
                                 </div>
                             </div>
                     `;
@@ -1740,10 +1705,7 @@
                                 ${game.players.map(p => {
                                     const detail = p.agariDetails && p.agariDetails[0];
                                     const ippatsuBadge = detail && detail.ippatsu ? ' <span style="color:#E65100;font-weight:bold;">⚡一発</span>' : '';
-                                    const doraBadge = detail && (detail.dora > 0 || detail.uraDora > 0) 
-                                        ? ` <span style="color:#2196F3;font-weight:bold;">🀄${detail.dora || 0}${detail.uraDora > 0 ? '+裏' + detail.uraDora : ''}</span>` 
-                                        : '';
-                                    const agariDetail = detail ? ` (${detail.type === 'tsumo' ? 'ツモ' : 'ロン'}${detail.from ? '←' + detail.from : ''}${ippatsuBadge}${doraBadge})` : '';
+                                    const agariDetail = detail ? ` (${detail.type === 'tsumo' ? 'ツモ' : 'ロン'}${detail.from ? '←' + detail.from : ''}${ippatsuBadge})` : '';
                                     const oyaBadge = p.isOya ? ' <span style="background:#FF5722;color:white;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:4px;">親</span>' : '';
                                     return `
                                     <div class="history-player">
@@ -1803,7 +1765,7 @@
             }
             
             // ヘッダー行
-            const headers = ['日時', '流局', 'プレイヤー', '家', '副露', 'リーチ', '和了', '和了方法', '一発', 'ドラ', '裏ドラ', '得点', '放銃', '放銃相手'];
+            const headers = ['日時', '流局', 'プレイヤー', '家', '副露', 'リーチ', '和了', '和了方法', '一発', '得点', '放銃', '放銃相手'];
             const rows = [headers];
             
             savedGames.forEach(game => {
@@ -1819,8 +1781,6 @@
                         p.agari > 0 ? '○' : '',
                         detail ? (detail.type === 'tsumo' ? 'ツモ' : 'ロン') : '',
                         detail && detail.ippatsu ? '○' : '',
-                        detail && detail.dora ? detail.dora : '',
-                        detail && detail.uraDora ? detail.uraDora : '',
                         detail ? detail.points : '',
                         p.houjuu > 0 ? '○' : '',
                         detail && detail.type === 'ron' && detail.from ? detail.from : ''
