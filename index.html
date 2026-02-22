@@ -753,15 +753,21 @@
 <body>
     <!-- 入力画面 -->
     <div id="inputScreen">
-        <div class="honba-bar" style="padding: 10px 8px;">
-            <button class="honba-btn" onclick="changeKyoku(-1)">◀</button>
-            <span class="honba-label" id="kyokuLabel" style="font-size: 16px; font-weight: bold;">東1局</span>
-            <button class="honba-btn" onclick="changeKyoku(1)">▶</button>
-            <span style="color:rgba(255,255,255,0.4);margin:0 8px;">|</span>
-            <button class="honba-btn" onclick="changeHonba(-1)">－</button>
-            <span class="honba-count" id="honbaCount" style="font-size: 16px; font-weight: bold;">0</span>
-            <span class="honba-label" style="font-size: 14px;">本場</span>
-            <button class="honba-btn" onclick="changeHonba(1)">＋</button>
+        <div class="honba-bar" style="padding: 10px 8px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="honba-btn" onclick="changeKyoku(-1)">◀</button>
+                <span class="honba-label" id="kyokuLabel" style="font-size: 16px; font-weight: bold;">東1局</span>
+                <button class="honba-btn" onclick="changeKyoku(1)">▶</button>
+                <span style="color:rgba(255,255,255,0.4);margin:0 8px;">|</span>
+                <button class="honba-btn" onclick="changeHonba(-1)">－</button>
+                <span class="honba-count" id="honbaCount" style="font-size: 16px; font-weight: bold;">0</span>
+                <span class="honba-label" style="font-size: 14px;">本場</span>
+                <button class="honba-btn" onclick="changeHonba(1)">＋</button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="honba-btn" onclick="showHistoryScreen()" style="font-size: 18px;">📊</button>
+                <button class="honba-btn" onclick="showScoreScreen()" style="font-size: 18px;">💰</button>
+            </div>
         </div>
 
         <div class="players-grid" id="playersGrid">
@@ -771,7 +777,16 @@
         <div class="control-panel">
             <button class="btn-save" onclick="openAgariModalCommon()" style="background: #E91E63;">🎉 和了</button>
             <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
-            <button class="btn-save" onclick="showHistoryScreen()" style="background: #9C27B0;">📊 統計情報</button>
+        </div>
+    </div>
+    
+    <!-- 点数管理画面 -->
+    <div id="scoreScreen" style="display: none; flex-direction: column; height: 100dvh; padding: 0;">
+        <div class="history-content" id="scoreContent" style="overflow-x: auto; flex: 1; padding: 10px;">
+            <!-- 点数管理がここに表示される -->
+        </div>
+        <div class="control-panel" style="flex-shrink: 0;">
+            <button class="btn-back" onclick="showInputScreen()">← 入力画面に戻る</button>
         </div>
     </div>
 
@@ -1329,12 +1344,14 @@
             document.getElementById('inputScreen').style.display = 'flex';
             document.getElementById('historyScreen').style.display = 'none';
             document.getElementById('rankingScreen').style.display = 'none';
+            document.getElementById('scoreScreen').style.display = 'none';
         }
 
         function showHistoryScreen() {
             document.getElementById('inputScreen').style.display = 'none';
             document.getElementById('historyScreen').style.display = 'flex';
             document.getElementById('rankingScreen').style.display = 'none';
+            document.getElementById('scoreScreen').style.display = 'none';
             loadHistory();
         }
         
@@ -1342,7 +1359,16 @@
             document.getElementById('inputScreen').style.display = 'none';
             document.getElementById('historyScreen').style.display = 'none';
             document.getElementById('rankingScreen').style.display = 'flex';
+            document.getElementById('scoreScreen').style.display = 'none';
             loadRanking();
+        }
+        
+        function showScoreScreen() {
+            document.getElementById('inputScreen').style.display = 'none';
+            document.getElementById('historyScreen').style.display = 'none';
+            document.getElementById('rankingScreen').style.display = 'none';
+            document.getElementById('scoreScreen').style.display = 'flex';
+            loadScoreManagement();
         }
 
         // ランキング表示
@@ -1520,6 +1546,468 @@
             `;
             
             content.innerHTML = html;
+        }
+        
+        // 点数管理画面表示
+        function loadScoreManagement() {
+            const content = document.getElementById('scoreContent');
+            
+            // LocalStorageから点数データを取得
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            
+            // タブ切り替え用のHTMLを生成
+            let html = `
+                <style>
+                    .tab-buttons {
+                        display: flex;
+                        gap: 5px;
+                        margin-bottom: 15px;
+                    }
+                    .tab-btn {
+                        flex: 1;
+                        padding: 10px;
+                        background: #ddd;
+                        border: none;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        cursor: pointer;
+                    }
+                    .tab-btn.active {
+                        background: #FF9800;
+                        color: white;
+                    }
+                    .tab-content {
+                        display: none;
+                    }
+                    .tab-content.active {
+                        display: block;
+                    }
+                    .score-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        font-size: 12px;
+                        margin-bottom: 20px;
+                    }
+                    .score-table th {
+                        background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+                        color: white;
+                        padding: 8px 4px;
+                        text-align: center;
+                        font-weight: bold;
+                        font-size: 11px;
+                    }
+                    .score-table td {
+                        padding: 6px 4px;
+                        text-align: center;
+                        border-bottom: 1px solid #e0e0e0;
+                    }
+                    .score-table input {
+                        width: 100%;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        padding: 4px 2px;
+                        text-align: center;
+                        font-size: 11px;
+                    }
+                    .positive-score {
+                        color: #c62828;
+                        font-weight: bold;
+                    }
+                    .negative-score {
+                        color: #1565c0;
+                        font-weight: bold;
+                    }
+                    .total-row {
+                        background: #fff3e0;
+                        font-weight: bold;
+                    }
+                    .btn-add-row {
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        margin-right: 10px;
+                    }
+                    .stat-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        background: white;
+                        margin-bottom: 20px;
+                        font-size: 13px;
+                    }
+                    .stat-table th, .stat-table td {
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        text-align: center;
+                    }
+                    .stat-table th {
+                        background: #f5f5f5;
+                        font-weight: bold;
+                    }
+                    canvas {
+                        max-width: 100%;
+                        height: 300px;
+                    }
+                </style>
+                
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('input')">入力</button>
+                    <button class="tab-btn" onclick="switchTab('stats')">集計</button>
+                    <button class="tab-btn" onclick="switchTab('graph')">グラフ</button>
+                </div>
+                
+                <!-- 入力タブ -->
+                <div id="tab-input" class="tab-content active">
+                    <div style="margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn-add-row" onclick="addScoreRow()">+ 行を追加</button>
+                        <button class="btn-add-row" onclick="deleteLastScoreRow()" style="background:#ff6b6b;">− 行を削除</button>
+                        <button class="btn-add-row" onclick="saveScoreData()" style="background:#4CAF50;">💾 保存</button>
+                        <button class="btn-add-row" onclick="exportScoreCSV()" style="background:#2196F3;">📥 CSVエクスポート</button>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="score-table">
+                            <thead>
+                                <tr>
+                                    <th>日付</th>
+                                    <th>回数</th>
+            `;
+            
+            playerNames.forEach(name => {
+                html += `<th>${name}<br>+</th><th>−</th><th>合計</th><th>着順</th>`;
+            });
+            
+            html += `</tr></thead><tbody>`;
+            
+            scoreData.forEach((row, index) => {
+                html += `<tr><td><input type="text" value="${row.date || ''}" onchange="updateScoreCell(${index}, 'date', this.value)"></td>
+                        <td><input type="number" value="${row.round || ''}" onchange="updateScoreCell(${index}, 'round', this.value)"></td>`;
+                
+                playerNames.forEach((name, pIndex) => {
+                    const playerData = row.players[pIndex] || {plus: '', minus: '', rank: ''};
+                    const minusVal = playerData.minus !== '' && playerData.minus !== undefined ? Math.abs(parseInt(playerData.minus) || 0) : '';
+                    const plusNum = parseInt(playerData.plus) || 0;
+                    const minusNum = minusVal !== '' ? -Math.abs(parseInt(minusVal)) : 0;
+                    const rowTotal = plusNum + minusNum;
+                    const totalClass = rowTotal > 0 ? 'positive-score' : rowTotal < 0 ? 'negative-score' : '';
+                    const totalDisplay = playerData.plus !== '' || minusVal !== '' ? rowTotal : '';
+                    html += `<td><input type="number" value="${playerData.plus || ''}" onchange="updateScorePlayerCell(${index}, ${pIndex}, 'plus', this.value)"></td>
+                            <td><input type="number" value="${minusVal !== '' ? -Math.abs(parseInt(minusVal)) : ''}" onchange="updateScorePlayerCellMinus(${index}, ${pIndex}, this.value)"></td>
+                            <td class="${totalClass}" style="font-weight:bold; min-width:50px;">${totalDisplay !== '' ? (rowTotal > 0 ? '+' + rowTotal : rowTotal) : ''}</td>
+                            <td><input type="number" value="${playerData.rank || ''}" onchange="updateScorePlayerCell(${index}, ${pIndex}, 'rank', this.value)" min="1" max="4"></td>`;
+                });
+                html += `</tr>`;
+            });
+            
+            // 合計行
+            html += `<tr class="total-row"><td colspan="2">合計</td>`;
+            playerNames.forEach((name, pIndex) => {
+                let totalPlus = 0, totalMinus = 0;
+                scoreData.forEach(row => {
+                    const pd = row.players[pIndex] || {};
+                    totalPlus += parseInt(pd.plus) || 0;
+                    totalMinus += Math.abs(parseInt(pd.minus) || 0);
+                });
+                const total = totalPlus - totalMinus;
+                const className = total > 0 ? 'positive-score' : total < 0 ? 'negative-score' : '';
+                html += `<td style="color:#1565C0;">${totalPlus > 0 ? '+' + totalPlus : totalPlus}</td><td style="color:#c62828;">${totalMinus > 0 ? '-' + totalMinus : 0}</td><td class="${className}" style="font-weight:bold;">${total > 0 ? '+' + total : total}</td><td>-</td>`;
+            });
+            html += `</tr></tbody></table></div>
+            <div style="margin-top:10px; padding:8px; background:#e8f5e9; border-radius:6px; font-size:12px; color:#2e7d32;">
+                💡 ＋は得点、−は失点を入力してください。−欄に入力した値は自動的にマイナスとして計算されます。合計＝＋の点数 ＋ (−の点数)
+            </div></div>`;
+            
+            // 集計タブ
+            html += `<div id="tab-stats" class="tab-content">`;
+            if (scoreData.length > 0) {
+                const stats = calculateStats(scoreData, playerNames);
+                html += `<table class="stat-table">
+                    <tr><th>着順/名前</th>${playerNames.map(n => `<th>${n}</th>`).join('')}</tr>
+                    <tr><td>1位</td>${stats.ranks[1].map(r => `<td>${r}</td>`).join('')}</tr>
+                    <tr><td>2位</td>${stats.ranks[2].map(r => `<td>${r}</td>`).join('')}</tr>
+                    <tr><td>3位</td>${stats.ranks[3].map(r => `<td>${r}</td>`).join('')}</tr>
+                    <tr><td>4位</td>${stats.ranks[4].map(r => `<td>${r}</td>`).join('')}</tr>
+                    <tr><td>トップ率</td>${stats.topRate.map(r => `<td>${r}%</td>`).join('')}</tr>
+                    <tr><td>連対率</td>${stats.top2Rate.map(r => `<td>${r}%</td>`).join('')}</tr>
+                    <tr><td>平均着順</td>${stats.avgRank.map(r => `<td>${r}</td>`).join('')}</tr>
+                    <tr><td>4着回避</td>${stats.avoid4th.map(r => `<td>${r}%</td>`).join('')}</tr>
+                    <tr class="total-row"><td>合計得点</td>${stats.totalScore.map(s => {
+                        const className = s > 0 ? 'positive-score' : s < 0 ? 'negative-score' : '';
+                        return `<td class="${className}">${s}</td>`;
+                    }).join('')}</tr>
+                    <tr><td>1位との得点差</td>${stats.scoreDiff.map(d => `<td>${d}</td>`).join('')}</tr>
+                    <tr style="background:#fffde7;"><td>半荘最大得点</td>${stats.maxScore.map((m,i) => 
+                        `<td>${m.score > 0 ? '+' : ''}${m.score}${m.isMax ? ' (' + playerNames[i] + ')' : ''}</td>`
+                    ).join('')}</tr>
+                </table>`;
+            }
+            html += `</div>`;
+            
+            // グラフタブ
+            html += `<div id="tab-graph" class="tab-content"><canvas id="scoreChart"></canvas></div>`;
+            
+            content.innerHTML = html;
+            
+            // グラフ描画（タブがアクティブな時のみ）
+            if (scoreData.length > 0) {
+                setTimeout(() => drawScoreChart(scoreData, playerNames), 100);
+            }
+        }
+        
+        function calculateStats(scoreData, playerNames) {
+            const stats = {
+                ranks: {1: [], 2: [], 3: [], 4: []},
+                topRate: [], top2Rate: [], avgRank: [], avoid4th: [],
+                totalScore: [], scoreDiff: [], maxScore: []
+            };
+            
+            playerNames.forEach((name, pIndex) => {
+                let ranks = {1: 0, 2: 0, 3: 0, 4: 0};
+                let totalRank = 0, totalScore = 0, maxScore = -Infinity;
+                let games = 0;
+                
+                scoreData.forEach(row => {
+                    const pd = row.players[pIndex];
+                    if (pd && pd.rank) {
+                        ranks[pd.rank]++;
+                        totalRank += parseInt(pd.rank);
+                        games++;
+                    }
+                    const score = (parseInt(pd?.plus) || 0) - Math.abs(parseInt(pd?.minus) || 0);
+                    totalScore += score;
+                    if (score > maxScore) maxScore = score;
+                });
+                
+                stats.ranks[1].push(ranks[1]);
+                stats.ranks[2].push(ranks[2]);
+                stats.ranks[3].push(ranks[3]);
+                stats.ranks[4].push(ranks[4]);
+                stats.topRate.push(games > 0 ? ((ranks[1] / games) * 100).toFixed(2) : 0);
+                stats.top2Rate.push(games > 0 ? (((ranks[1] + ranks[2]) / games) * 100).toFixed(2) : 0);
+                stats.avgRank.push(games > 0 ? (totalRank / games).toFixed(2) : 0);
+                stats.avoid4th.push(games > 0 ? (((games - ranks[4]) / games) * 100).toFixed(2) : 0);
+                stats.totalScore.push(totalScore);
+                stats.maxScore.push({score: maxScore === -Infinity ? 0 : maxScore, isMax: false});
+            });
+            
+            const maxScoreValue = Math.max(...stats.maxScore.map(m => m.score));
+            stats.maxScore.forEach(m => { if (m.score === maxScoreValue) m.isMax = true; });
+            
+            const maxTotal = Math.max(...stats.totalScore);
+            stats.scoreDiff = stats.totalScore.map(s => s - maxTotal);
+            
+            return stats;
+        }
+        
+        function drawScoreChart(scoreData, playerNames) {
+            const canvas = document.getElementById('scoreChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            // 保存済みデータがあればそちらを使う
+            const savedData = JSON.parse(localStorage.getItem('savedScoreData') || 'null');
+            const chartData = savedData || scoreData;
+            if (chartData.length === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('データがありません。入力タブで保存してください。', canvas.width / 2, 150);
+                return;
+            }
+            
+            // 累積点数を計算
+            const累積 = playerNames.map(() => [0]);
+            chartData.forEach(row => {
+                playerNames.forEach((name, pIndex) => {
+                    const pd = row.players[pIndex];
+                    const score = (parseInt(pd?.plus) || 0) - Math.abs(parseInt(pd?.minus) || 0);
+                    const last = 累積[pIndex][累積[pIndex].length - 1];
+                    累積[pIndex].push(last + score);
+                });
+            });
+            
+            // グラフ描画
+            const colors = ['#2196F3', '#F44336', '#FF9800', '#4CAF50'];
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = 300;
+            ctx.clearRect(0, 0, width, height);
+            
+            const maxVal = Math.max(...累積.flat());
+            const minVal = Math.min(...累積.flat());
+            const range = Math.max(Math.abs(maxVal), Math.abs(minVal), 50);
+            
+            // 軸
+            ctx.strokeStyle = '#ccc';
+            ctx.beginPath();
+            ctx.moveTo(40, height - 30);
+            ctx.lineTo(width - 20, height - 30);
+            ctx.stroke();
+            
+            // 0ライン
+            const zeroY = height - 30 - ((0 - (-range)) / (range * 2)) * (height - 60);
+            ctx.strokeStyle = '#999';
+            ctx.beginPath();
+            ctx.moveTo(40, zeroY);
+            ctx.lineTo(width - 20, zeroY);
+            ctx.stroke();
+            
+            // データ描画
+            累積.forEach((data, pIndex) => {
+                ctx.strokeStyle = colors[pIndex];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                data.forEach((val, i) => {
+                    const x = 40 + (i / (data.length - 1)) * (width - 60);
+                    const y = height - 30 - ((val - (-range)) / (range * 2)) * (height - 60);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                
+                // 凡例
+                ctx.fillStyle = colors[pIndex];
+                ctx.fillRect(50 + pIndex * 80, 10, 10, 10);
+                ctx.fillStyle = '#333';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(playerNames[pIndex], 65 + pIndex * 80, 19);
+            });
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            if (tabName === 'graph') {
+                const savedData = JSON.parse(localStorage.getItem('savedScoreData') || '[]');
+                const scoreData = savedData.length > 0 ? savedData : JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+                const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+                setTimeout(() => drawScoreChart(scoreData, playerNames), 100);
+            }
+        }
+        
+        // 点数行を追加
+        function addScoreRow() {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            
+            const newRow = {
+                date: new Date().toLocaleDateString('ja-JP'),
+                round: scoreData.length + 1,
+                players: playerNames.map(() => ({plus: '', minus: '', rank: ''}))
+            };
+            
+            scoreData.push(newRow);
+            localStorage.setItem('mahjongScoreData', JSON.stringify(scoreData));
+            loadScoreManagement();
+        }
+        
+        // セルの値を更新
+        function updateScoreCell(rowIndex, field, value) {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            if (scoreData[rowIndex]) {
+                scoreData[rowIndex][field] = value;
+                localStorage.setItem('mahjongScoreData', JSON.stringify(scoreData));
+            }
+        }
+        
+        // プレイヤーセルの値を更新
+        function updateScorePlayerCell(rowIndex, playerIndex, field, value) {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            if (scoreData[rowIndex] && scoreData[rowIndex].players[playerIndex]) {
+                scoreData[rowIndex].players[playerIndex][field] = value;
+                localStorage.setItem('mahjongScoreData', JSON.stringify(scoreData));
+                loadScoreManagement(); // 合計を再計算するため再読み込み
+            }
+        }
+        
+        // 点数データを保存（savedScoreDataキーに保存してグラフ用に使う）
+        function saveScoreData() {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            localStorage.setItem('savedScoreData', JSON.stringify(scoreData));
+            // ボタンにフィードバック
+            const btns = document.querySelectorAll('.btn-add-row');
+            btns.forEach(btn => {
+                if (btn.textContent.includes('保存')) {
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ 保存しました！';
+                    btn.style.background = '#388E3C';
+                    setTimeout(() => { btn.textContent = orig; btn.style.background = '#4CAF50'; }, 2000);
+                }
+            });
+        }
+
+        // 最後の行を削除
+        function deleteLastScoreRow() {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            if (scoreData.length === 0) { alert('削除する行がありません。'); return; }
+            scoreData.pop();
+            localStorage.setItem('mahjongScoreData', JSON.stringify(scoreData));
+            loadScoreManagement();
+        }
+
+        // -列専用更新（絶対値で保存して表示時にマイナスにする）
+        function updateScorePlayerCellMinus(rowIndex, playerIndex, value) {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            if (scoreData[rowIndex] && scoreData[rowIndex].players[playerIndex]) {
+                // 入力値の絶対値を保存（表示時にマイナスに変換）
+                scoreData[rowIndex].players[playerIndex].minus = Math.abs(parseInt(value) || 0);
+                localStorage.setItem('mahjongScoreData', JSON.stringify(scoreData));
+                loadScoreManagement();
+            }
+        }
+
+        // 点数管理CSVエクスポート
+        function exportScoreCSV() {
+            const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+            const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            if (scoreData.length === 0) { alert('エクスポートするデータがありません。'); return; }
+
+            let csv = '日付,回数';
+            playerNames.forEach(name => { csv += `,${name}+,${name}-,${name}合計,${name}着順`; });
+            csv += '\n';
+
+            scoreData.forEach(row => {
+                csv += `${row.date || ''},${row.round || ''}`;
+                playerNames.forEach((name, pIndex) => {
+                    const pd = row.players[pIndex] || {};
+                    const plus = parseInt(pd.plus) || 0;
+                    const minus = Math.abs(parseInt(pd.minus) || 0);
+                    const total = plus - minus;
+                    csv += `,${plus},${minus > 0 ? -minus : 0},${total},${pd.rank || ''}`;
+                });
+                csv += '\n';
+            });
+
+            // 合計行
+            csv += '合計,-';
+            playerNames.forEach((name, pIndex) => {
+                let totalPlus = 0, totalMinus = 0;
+                scoreData.forEach(row => {
+                    const pd = row.players[pIndex] || {};
+                    totalPlus += parseInt(pd.plus) || 0;
+                    totalMinus += Math.abs(parseInt(pd.minus) || 0);
+                });
+                const total = totalPlus - totalMinus;
+                csv += `,${totalPlus},${totalMinus > 0 ? -totalMinus : 0},${total},-`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `麻雀点数管理_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         // 履歴表示
