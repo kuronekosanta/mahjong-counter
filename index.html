@@ -202,7 +202,7 @@
 
         .toggle-item {
             width: calc(50% - 2px);
-            height: calc(50% - 2px);
+            height: 40px;
             -webkit-box-sizing: border-box;
             box-sizing: border-box;
             display: -webkit-box;
@@ -753,20 +753,15 @@
 <body>
     <!-- 入力画面 -->
     <div id="inputScreen">
-        <div class="header">
-            <h1>🀄 麻雀カウンター</h1>
-        </div>
-        <div class="honba-bar">
+        <div class="honba-bar" style="padding: 10px 8px;">
             <button class="honba-btn" onclick="changeKyoku(-1)">◀</button>
-            <span class="honba-label" id="kyokuLabel">東1局</span>
+            <span class="honba-label" id="kyokuLabel" style="font-size: 16px; font-weight: bold;">東1局</span>
             <button class="honba-btn" onclick="changeKyoku(1)">▶</button>
-            <span style="color:rgba(255,255,255,0.4);margin:0 4px;">|</span>
+            <span style="color:rgba(255,255,255,0.4);margin:0 8px;">|</span>
             <button class="honba-btn" onclick="changeHonba(-1)">－</button>
-            <span class="honba-count" id="honbaCount">0</span>
-            <span class="honba-label">本場</span>
+            <span class="honba-count" id="honbaCount" style="font-size: 16px; font-weight: bold;">0</span>
+            <span class="honba-label" style="font-size: 14px;">本場</span>
             <button class="honba-btn" onclick="changeHonba(1)">＋</button>
-            <span style="color:rgba(255,255,255,0.4);margin:0 4px;">|</span>
-            <button class="btn-history-header" onclick="showHistoryScreen()">📊</button>
         </div>
 
         <div class="players-grid" id="playersGrid">
@@ -776,6 +771,7 @@
         <div class="control-panel">
             <button class="btn-save" onclick="openAgariModalCommon()" style="background: #E91E63;">🎉 和了</button>
             <button class="btn-save" onclick="saveData()">💾 記録を保存</button>
+            <button class="btn-save" onclick="showHistoryScreen()" style="background: #9C27B0;">📊 統計情報</button>
         </div>
     </div>
 
@@ -1448,14 +1444,14 @@
                         padding-left: 12px;
                     }
                     .best-value {
-                        background: #e3f2fd;
-                        font-weight: bold;
-                        color: #1565c0;
-                    }
-                    .worst-value {
                         background: #ffebee;
                         font-weight: bold;
                         color: #c62828;
+                    }
+                    .worst-value {
+                        background: #e3f2fd;
+                        font-weight: bold;
+                        color: #1565c0;
                     }
                     @media (max-width: 768px) {
                         .ranking-table {
@@ -1496,6 +1492,10 @@
             const minTsumoRate = Math.min(...rankings.map(r => parseFloat(r.tsumoRate)));
             const maxHoujuuRate = Math.max(...rankings.map(r => parseFloat(r.houjuuRate)));
             const minHoujuuRate = Math.min(...rankings.map(r => parseFloat(r.houjuuRate)));
+            const maxFuroRate = Math.max(...rankings.map(r => parseFloat(r.furoRate)));
+            const minFuroRate = Math.min(...rankings.map(r => parseFloat(r.furoRate)));
+            const maxReachRate = Math.max(...rankings.map(r => parseFloat(r.reachRate)));
+            const minReachRate = Math.min(...rankings.map(r => parseFloat(r.reachRate)));
             
             rankings.forEach((player, index) => {
                 html += `
@@ -1507,8 +1507,8 @@
                         <td class="${parseFloat(player.agariRate) === maxAgariRate && maxAgariRate > 0 ? 'best-value' : ''} ${parseFloat(player.agariRate) === minAgariRate && rankings.length > 1 ? 'worst-value' : ''}">${player.agariRate}%</td>
                         <td class="${parseFloat(player.tsumoRate) === maxTsumoRate && maxTsumoRate > 0 ? 'best-value' : ''} ${parseFloat(player.tsumoRate) === minTsumoRate && rankings.length > 1 ? 'worst-value' : ''}">${player.tsumoRate}%</td>
                         <td class="${parseFloat(player.houjuuRate) === minHoujuuRate && rankings.length > 1 ? 'best-value' : ''} ${parseFloat(player.houjuuRate) === maxHoujuuRate && rankings.length > 1 ? 'worst-value' : ''}">${player.houjuuRate}%</td>
-                        <td>${player.furoRate}%</td>
-                        <td>${player.reachRate}%</td>
+                        <td class="${parseFloat(player.furoRate) === maxFuroRate && maxFuroRate > 0 ? 'best-value' : ''} ${parseFloat(player.furoRate) === minFuroRate && rankings.length > 1 ? 'worst-value' : ''}">${player.furoRate}%</td>
+                        <td class="${parseFloat(player.reachRate) === maxReachRate && maxReachRate > 0 ? 'best-value' : ''} ${parseFloat(player.reachRate) === minReachRate && rankings.length > 1 ? 'worst-value' : ''}">${player.reachRate}%</td>
                     </tr>
                 `;
             });
