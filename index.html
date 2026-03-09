@@ -1554,7 +1554,8 @@
             
             // LocalStorageから点数データを取得
             const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
-            const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            // CSVインポート時の名前を優先、なければアプリのプレイヤー名を使用
+            const playerNames = JSON.parse(localStorage.getItem('mahjongScorePlayerNames') || localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
             
             // タブ切り替え用のHTMLを生成
             // スタイルをDOMに直接挿入（テンプレートリテラルの複数行問題を回避）
@@ -1886,7 +1887,7 @@
             if (tabName === 'graph') {
                 const savedData = JSON.parse(localStorage.getItem('savedScoreData') || '[]');
                 const scoreData = savedData.length > 0 ? savedData : JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
-                const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+                const playerNames = JSON.parse(localStorage.getItem('mahjongScorePlayerNames') || localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
                 setTimeout(() => drawScoreChart(scoreData, playerNames), 100);
             }
         }
@@ -1894,7 +1895,8 @@
         // 点数行を追加
         function addScoreRow() {
             const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
-            const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            // CSVインポート時の名前を優先、なければアプリのプレイヤー名を使用
+            const playerNames = JSON.parse(localStorage.getItem('mahjongScorePlayerNames') || localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
             
             const newRow = {
                 date: new Date().toLocaleDateString('ja-JP'),
@@ -1982,7 +1984,8 @@
         // 点数管理CSVエクスポート
         function exportScoreCSV() {
             const scoreData = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
-            const playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            // CSVインポート時の名前を優先、なければアプリのプレイヤー名を使用
+            const playerNames = JSON.parse(localStorage.getItem('mahjongScorePlayerNames') || localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
             if (scoreData.length === 0) { alert('エクスポートするデータがありません。'); return; }
 
             let csv = '日付,回数';
@@ -2193,6 +2196,15 @@
             _csvImportState = null;
 
             if (newData.length === 0) { alert('読み込めるデータがありませんでした。'); return; }
+
+            // mapping に基づいてCSV側の実際の名前を確定し保存
+            // mapping[appIndex] = csvPlayerIndex なので、csvNames[mapping[i]] がCSV名
+            var resolvedNames = appNames.map(function(appName, ai) {
+                var ci = mapping[ai];
+                return (ci >= 0 && csvNames[ci]) ? csvNames[ci] : appName;
+            });
+            // CSVインポートしたデータ用の表示名として保存
+            localStorage.setItem('mahjongScorePlayerNames', JSON.stringify(resolvedNames));
 
             var choice = confirm(newData.length + '行読み込み。OK=追記 / キャンセル=置き換え');
             if (choice) {
