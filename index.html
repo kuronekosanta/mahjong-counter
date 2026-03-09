@@ -2024,15 +2024,20 @@
         }
 
         // 点数管理CSVインポート
+        // ===== CSVインポート：名前不一致時はマッピングUIを表示 =====
+
+        // CSVから読み取ったプレイヤー名リストを一時保存
+        var _csvImportState = null;
+
         function importScoreCSV(event) {
             var file = event.target.files[0];
             if (!file) return;
-            var playerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+            event.target.value = '';
+
             var reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     var text = e.target.result;
-                    // BOM除去
                     if (text.charCodeAt(0) === 0xFEFF) { text = text.slice(1); }
                     var lines = [];
                     var rawLines = text.split('\n');
@@ -2043,54 +2048,161 @@
                     if (lines.length < 2) { alert('データがありません。'); return; }
 
                     var headers = lines[0].split(',');
-                    var playerCols = playerNames.map(function(name) {
-                        return {
-                            plusIdx:  headers.indexOf(name + '+'),
-                            minusIdx: headers.indexOf(name + '-'),
-                            rankIdx:  headers.indexOf(name + '着順')
-                        };
+
+                    // ヘッダーから「+」列を持つプレイヤー名をCSV側として抽出
+                    var csvPlayerNames = [];
+                    for (var hi = 0; hi < headers.length; hi++) {
+                        if (headers[hi].slice(-1) === '+') {
+                            csvPlayerNames.push(headers[hi].slice(0, -1));
+                        }
+                    }
+                    if (csvPlayerNames.length === 0) {
+                        alert('CSVにプレイヤーデータが見つかりません。ヘッダー形式: 日付,回数,名前+,名前-,...');
+                        return;
+                    }
+
+                    var appPlayerNames = JSON.parse(localStorage.getItem('mahjongPlayerNames') || '["東家","南家","西家","北家"]');
+
+                    // 完全一致チェック
+                    var allMatch = csvPlayerNames.every(function(cn, i) {
+                        return appPlayerNames[i] === cn;
                     });
 
-                    var newData = [];
-                    for (var i = 1; i < lines.length; i++) {
-                        var cols = lines[i].split(',');
-                        if (cols[0] === '合計') continue;
-                        if (!cols[0] && !cols[1]) continue;
-                        var row = {
-                            date:  cols[0] || '',
-                            round: cols[1] || i,
-                            players: playerNames.map(function(name, pIndex) {
-                                var pc = playerCols[pIndex];
-                                var plus     = pc.plusIdx  >= 0 ? (parseInt(cols[pc.plusIdx])  || 0) : 0;
-                                var minusRaw = pc.minusIdx >= 0 ? (parseInt(cols[pc.minusIdx]) || 0) : 0;
-                                return {
-                                    plus:  plus     !== 0 ? plus     : '',
-                                    minus: Math.abs(minusRaw) !== 0 ? Math.abs(minusRaw) : '',
-                                    rank:  ''
-                                };
-                            })
-                        };
-                        autoCalcRanksForRow(row);
-                        newData.push(row);
-                    }
+                    // 一時状態を保存してマッピングUIへ
+                    _csvImportState = { lines: lines, headers: headers, csvPlayerNames: csvPlayerNames, appPlayerNames: appPlayerNames };
 
-                    if (newData.length === 0) { alert('読み込めるデータがありませんでした。'); return; }
-
-                    var choice = confirm(newData.length + '行読み込み。OK=追記 / キャンセル=置き換え');
-                    if (choice) {
-                        var existing = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
-                        localStorage.setItem('mahjongScoreData', JSON.stringify(existing.concat(newData)));
+                    if (allMatch) {
+                        // 全員一致 → そのままインポート実行
+                        var mapping = csvPlayerNames.map(function(cn, i) { return i; });
+                        _executeScoreImport(mapping);
                     } else {
-                        localStorage.setItem('mahjongScoreData', JSON.stringify(newData));
+                        // 不一致 → マッピングモーダルを表示
+                        _showImportMappingModal();
                     }
-                    event.target.value = '';
-                    loadScoreManagement();
-                    alert(newData.length + '行のデータを読み込みました（着順は自動計算済み）');
                 } catch (err) {
                     alert('CSVの読み込みに失敗: ' + err.message);
                 }
             };
             reader.readAsText(file, 'UTF-8');
+        }
+
+        // マッピングモーダルを表示
+        function _showImportMappingModal() {
+            var state = _csvImportState;
+            var csvNames = state.csvPlayerNames;
+            var appNames = state.appPlayerNames;
+
+            // モーダルHTML生成
+            var html = '<div id="importMappingOverlay" style="'
+                + 'position:fixed;top:0;left:0;width:100%;height:100%;'
+                + 'background:rgba(0,0,0,0.6);z-index:9999;'
+                + 'display:flex;align-items:center;justify-content:center;">'
+                + '<div style="background:#fff;border-radius:12px;padding:20px;width:90%;max-width:400px;max-height:90vh;overflow-y:auto;">'
+                + '<h3 style="margin:0 0 6px;font-size:16px;">📤 CSVインポート - 列の対応設定</h3>'
+                + '<p style="font-size:12px;color:#666;margin:0 0 16px;">'
+                + 'CSVの列名とアプリのプレイヤーを対応付けてください。</p>';
+
+            // アプリのプレイヤーごとにCSV列を選択するselectを表示
+            for (var ai = 0; ai < appNames.length; ai++) {
+                html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+                    + '<span style="min-width:60px;font-weight:bold;font-size:13px;">' + appNames[ai] + '</span>'
+                    + '<span style="color:#999;font-size:12px;">←</span>'
+                    + '<select id="csvMapping_' + ai + '" style="flex:1;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:13px;">'
+                    + '<option value="-1">（対応なし）</option>';
+                for (var ci = 0; ci < csvNames.length; ci++) {
+                    // デフォルト: インデックスが同じものを選択
+                    var selected = (ci === ai) ? ' selected' : '';
+                    html += '<option value="' + ci + '"' + selected + '>' + csvNames[ci] + '</option>';
+                }
+                html += '</select></div>';
+            }
+
+            html += '<div style="display:flex;gap:8px;margin-top:16px;">'
+                + '<button onclick="_cancelImport()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ddd;font-weight:bold;cursor:pointer;">キャンセル</button>'
+                + '<button onclick="_confirmImport()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#9C27B0;color:#fff;font-weight:bold;cursor:pointer;">取り込む</button>'
+                + '</div>'
+                + '</div></div>';
+
+            var overlay = document.createElement('div');
+            overlay.id = 'importMappingOverlay';
+            overlay.innerHTML = html;
+            // 二重挿入防止
+            var existing = document.getElementById('importMappingOverlay');
+            if (existing) existing.remove();
+            document.body.appendChild(overlay.firstChild);
+        }
+
+        function _cancelImport() {
+            var el = document.getElementById('importMappingOverlay');
+            if (el) el.remove();
+            _csvImportState = null;
+        }
+
+        function _confirmImport() {
+            var state = _csvImportState;
+            if (!state) return;
+            var mapping = [];
+            for (var ai = 0; ai < state.appPlayerNames.length; ai++) {
+                var sel = document.getElementById('csvMapping_' + ai);
+                mapping.push(sel ? parseInt(sel.value) : -1);
+            }
+            var el = document.getElementById('importMappingOverlay');
+            if (el) el.remove();
+            _executeScoreImport(mapping);
+        }
+
+        // mapping[appIndex] = csvPlayerIndex（-1は対応なし）
+        function _executeScoreImport(mapping) {
+            var state = _csvImportState;
+            var lines = state.lines;
+            var headers = state.headers;
+            var csvNames = state.csvPlayerNames;
+            var appNames = state.appPlayerNames;
+
+            // CSV列インデックス取得ヘルパー
+            function colIdx(csvPlayerIdx, suffix) {
+                if (csvPlayerIdx < 0) return -1;
+                return headers.indexOf(csvNames[csvPlayerIdx] + suffix);
+            }
+
+            var newData = [];
+            for (var i = 1; i < lines.length; i++) {
+                var cols = lines[i].split(',');
+                if (cols[0] === '合計') continue;
+                if (!cols[0] && !cols[1]) continue;
+                var row = {
+                    date:  cols[0] || '',
+                    round: cols[1] || i,
+                    players: appNames.map(function(name, ai) {
+                        var ci = mapping[ai];
+                        var pIdx = colIdx(ci, '+');
+                        var mIdx = colIdx(ci, '-');
+                        var plus     = pIdx >= 0 ? (parseInt(cols[pIdx]) || 0) : 0;
+                        var minusRaw = mIdx >= 0 ? (parseInt(cols[mIdx]) || 0) : 0;
+                        return {
+                            plus:  plus !== 0 ? plus : '',
+                            minus: Math.abs(minusRaw) !== 0 ? Math.abs(minusRaw) : '',
+                            rank:  ''
+                        };
+                    })
+                };
+                autoCalcRanksForRow(row);
+                newData.push(row);
+            }
+
+            _csvImportState = null;
+
+            if (newData.length === 0) { alert('読み込めるデータがありませんでした。'); return; }
+
+            var choice = confirm(newData.length + '行読み込み。OK=追記 / キャンセル=置き換え');
+            if (choice) {
+                var existing = JSON.parse(localStorage.getItem('mahjongScoreData') || '[]');
+                localStorage.setItem('mahjongScoreData', JSON.stringify(existing.concat(newData)));
+            } else {
+                localStorage.setItem('mahjongScoreData', JSON.stringify(newData));
+            }
+            loadScoreManagement();
+            alert(newData.length + '行のデータを読み込みました（着順は自動計算済み）');
         }
 
         // 履歴表示
