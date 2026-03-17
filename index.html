@@ -2546,9 +2546,10 @@
                         }
                         fields.push(current);
                         
-                        if (fields.length < 14) return; // 不完全な行はスキップ
+                        if (fields.length < 12) return; // 不完全な行はスキップ
                         
-                        const [timestamp, isRyukyoku, playerName, position, furo, reach, agari, agariType, ippatsu, dora, uraDora, points, houjuu, ronFrom] = fields;
+                        // カラム順: 日時、流局、プレイヤー、家、副露、リーチ、和了、和了方法、一発、得点、放銃、放銃相手
+                        const [timestamp, isRyukyoku, playerName, position, furo, reach, agari, agariType, ippatsu, points, houjuu, ronFrom] = fields;
                         
                         if (!gamesByTimestamp[timestamp]) {
                             gamesByTimestamp[timestamp] = {
@@ -2579,8 +2580,8 @@
                                 points: points ? parseInt(points) : 0,
                                 from: ronFrom || null,
                                 ippatsu: ippatsu === '○',
-                                dora: dora ? parseInt(dora) : 0,
-                                uraDora: uraDora ? parseInt(uraDora) : 0,
+                                dora: 0,
+                                uraDora: 0,
                                 timestamp: timestamp
                             });
                         }
